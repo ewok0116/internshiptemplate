@@ -1,0 +1,2 @@
+# internshiptemplate
+Internship template
