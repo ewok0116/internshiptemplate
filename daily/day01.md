@@ -3,7 +3,7 @@
 ## ✅ Objectives
 - [x] Set up GitHub account
 - [x] Fork the internship repo
-- [ ] Clone the repo locally
+- [x] Clone the repo locally
 
 ## 📘 What I Learned
 ...
