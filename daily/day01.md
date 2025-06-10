@@ -10,8 +10,9 @@
 
 
 ## 📘 What I Learned
-- I get familiar with the usage of github
-- Practised what I learned from data base courses and made a relational model diagram
+- I got familiar with the usage of github.
+- Practised what I learned from data base courses and made a relational model diagram.
+- Practised Kotlin. Gotten more familiar with it.
 
 ## ❓ Questions
 How to make my app look more professional
