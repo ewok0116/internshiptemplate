@@ -6,6 +6,7 @@
 - [x] Clone the repo locally
 - [x] Design is made on Figma 
 - [x] RM Diagram is made for the DB
+- [x] Draft Mobile application is made using Android Studio
 
 
 ## 📘 What I Learned
