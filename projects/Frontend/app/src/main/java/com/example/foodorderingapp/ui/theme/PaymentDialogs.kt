@@ -6,11 +6,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Money
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,41 +25,69 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.foodorderingapp.models.DemoFoodOrderingViewModel
 import com.example.foodorderingapp.models.PaymentMethod
 
 @Composable
 fun PaymentMethodDialog(viewModel: DemoFoodOrderingViewModel) {
-    Dialog(onDismissRequest = { viewModel.hidePayment() }) {
+    val theme = LocalAppTheme.current // Get current theme
+    var selectedPaymentMethod by remember { mutableStateOf(PaymentMethod.CREDIT_CARD) }
+
+    Dialog(
+        onDismissRequest = {
+            // Empty - makes dialog non-cancellable
+            // Users must use navigation to go back to cart
+        },
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(Color(0xFFFF8C42))
+                .background(theme.primaryColor) // Use theme primary color
                 .padding(20.dp)
         ) {
             Column {
-                // Header
-                Text(
-                    text = "Payment Method",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                // Header with Back Button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Back to Cart Button
+                    IconButton(
+                        onClick = {
+                            viewModel.hidePayment()
+                            viewModel.showCart()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back to Cart",
+                            tint = theme.textOnPrimary
+                        )
+                    }
 
-                Text(
-                    text = "Your order: Big King Menu",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    Text(
+                        text = "Payment Method",
+                        color = theme.textOnPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Center
+                    )
+
+                    // Placeholder for symmetry
+                    Spacer(modifier = Modifier.width(48.dp))
+                }
 
                 Text(
                     text = "Price: ${String.format("%.2f", viewModel.cartTotal)} TL",
-                    color = Color.White,
+                    color = theme.textOnPrimary,
                     fontSize = 14.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
@@ -69,8 +99,8 @@ fun PaymentMethodDialog(viewModel: DemoFoodOrderingViewModel) {
                 PaymentMethodOption(
                     icon = Icons.Default.CreditCard,
                     text = "5168 **** Credit Card",
-                    isSelected = true,
-                    onClick = { viewModel.processPayment(PaymentMethod.CREDIT_CARD) }
+                    isSelected = selectedPaymentMethod == PaymentMethod.CREDIT_CARD,
+                    onClick = { selectedPaymentMethod = PaymentMethod.CREDIT_CARD }
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -78,8 +108,8 @@ fun PaymentMethodDialog(viewModel: DemoFoodOrderingViewModel) {
                 PaymentMethodOption(
                     icon = Icons.Default.Money,
                     text = "Cash",
-                    isSelected = false,
-                    onClick = { viewModel.processPayment(PaymentMethod.CASH) }
+                    isSelected = selectedPaymentMethod == PaymentMethod.CASH,
+                    onClick = { selectedPaymentMethod = PaymentMethod.CASH }
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -87,11 +117,55 @@ fun PaymentMethodDialog(viewModel: DemoFoodOrderingViewModel) {
                 PaymentMethodOption(
                     icon = Icons.Default.LocalOffer,
                     text = "Coupon",
-                    isSelected = false,
-                    onClick = { viewModel.processPayment(PaymentMethod.COUPON) }
+                    isSelected = selectedPaymentMethod == PaymentMethod.COUPON,
+                    onClick = { selectedPaymentMethod = PaymentMethod.COUPON }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                PaymentMethodOption(
+                    icon = Icons.Default.CreditCard,
+                    text = "Sodexo",
+                    isSelected = selectedPaymentMethod == PaymentMethod.SODEXO,
+                    onClick = { selectedPaymentMethod = PaymentMethod.SODEXO }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                PaymentMethodOption(
+                    icon = Icons.Default.CreditCard,
+                    text = "Multinet",
+                    isSelected = selectedPaymentMethod == PaymentMethod.MULTINET,
+                    onClick = { selectedPaymentMethod = PaymentMethod.MULTINET }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                PaymentMethodOption(
+                    icon = Icons.Default.CreditCard,
+                    text = "Edenred",
+                    isSelected = selectedPaymentMethod == PaymentMethod.EDENRED,
+                    onClick = { selectedPaymentMethod = PaymentMethod.EDENRED }
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
+
+                // Pay Now Button
+                Button(
+                    onClick = { viewModel.processPayment(selectedPaymentMethod) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = theme.primaryColor
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "Pay Now",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
             }
         }
     }
@@ -104,6 +178,8 @@ fun PaymentMethodOption(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val theme = LocalAppTheme.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -148,12 +224,20 @@ fun PaymentMethodOption(
 
 @Composable
 fun PaymentProcessingDialog() {
-    Dialog(onDismissRequest = { }) {
+    val theme = LocalAppTheme.current
+
+    Dialog(
+        onDismissRequest = { },
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(Color(0xFFFF8C42))
+                .background(theme.primaryColor)
                 .padding(40.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -180,37 +264,29 @@ fun PaymentProcessingDialog() {
 
 @Composable
 fun PaymentFailedDialog(viewModel: DemoFoodOrderingViewModel) {
-    Dialog(onDismissRequest = { viewModel.hidePayment() }) {
+    val theme = LocalAppTheme.current
+
+    Dialog(
+        onDismissRequest = { },
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(Color(0xFFFF8C42))
+                .background(theme.primaryColor)
                 .padding(20.dp)
         ) {
             Column {
                 // Header
                 Text(
-                    text = "Payment Method",
-                    color = Color.White,
+                    text = "Payment Failed",
+                    color = theme.textOnPrimary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Text(
-                    text = "Your order: Big King Menu",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Text(
-                    text = "Price: 285,99 TL",
-                    color = Color.White,
-                    fontSize = 14.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -257,19 +333,46 @@ fun PaymentFailedDialog(viewModel: DemoFoodOrderingViewModel) {
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        Button(
-                            onClick = { viewModel.retryPayment() },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFFF8C42)
-                            ),
-                            shape = RoundedCornerShape(8.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text(
-                                text = "OK",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp
-                            )
+                            // Back to Cart Button
+                            Button(
+                                onClick = {
+                                    viewModel.hidePayment()
+                                    viewModel.showCart()
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Gray
+                                ),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text(
+                                    text = "Back to Cart",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
+                            }
+
+                            // Retry Button
+                            Button(
+                                onClick = { viewModel.retryPayment() },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = theme.primaryColor
+                                ),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text(
+                                    text = "Retry",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
+                            }
                         }
                     }
                 }
@@ -279,68 +382,36 @@ fun PaymentFailedDialog(viewModel: DemoFoodOrderingViewModel) {
 }
 
 @Composable
-fun PaymentSuccessDialog(viewModel: DemoFoodOrderingViewModel) {
-    Dialog(onDismissRequest = { viewModel.hidePayment() }) {
+fun PaymentSuccessDialog(
+    viewModel: DemoFoodOrderingViewModel,
+    paymentMethod: PaymentMethod = PaymentMethod.CREDIT_CARD
+) {
+    val theme = LocalAppTheme.current
+    var showReceipt by remember { mutableStateOf(false) }
+
+    Dialog(
+        onDismissRequest = { },
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(Color(0xFFFF8C42))
+                .background(theme.primaryColor)
                 .padding(20.dp)
         ) {
             Column {
                 // Header
                 Text(
-                    text = "Payment Method",
-                    color = Color.White,
+                    text = "Payment Successful",
+                    color = theme.textOnPrimary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
-                )
-
-                Text(
-                    text = "Your order: Big King Menu",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Text(
-                    text = "Price: 285,99 TL",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Payment Methods (disabled state)
-                PaymentMethodOption(
-                    icon = Icons.Default.CreditCard,
-                    text = "5168 **** Credit Card",
-                    isSelected = true,
-                    onClick = { }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                PaymentMethodOption(
-                    icon = Icons.Default.Money,
-                    text = "Cash",
-                    isSelected = false,
-                    onClick = { }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                PaymentMethodOption(
-                    icon = Icons.Default.LocalOffer,
-                    text = "Coupon",
-                    isSelected = false,
-                    onClick = { }
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -350,7 +421,7 @@ fun PaymentSuccessDialog(viewModel: DemoFoodOrderingViewModel) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFFFF8C42))
+                        .background(Color.White.copy(alpha = 0.2f))
                         .padding(20.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -380,30 +451,85 @@ fun PaymentSuccessDialog(viewModel: DemoFoodOrderingViewModel) {
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Text(
-                            text = "You can go back to main page",
+                            text = "Your order has been confirmed!",
                             color = Color.White,
                             fontSize = 14.sp
                         )
 
                         Spacer(modifier = Modifier.height(20.dp))
 
+                        // Show Receipt Button
                         Button(
-                            onClick = { viewModel.hidePayment() },
+                            onClick = { showReceipt = true },
+                            modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White.copy(alpha = 0.2f)
+                                containerColor = Color.White,
+                                contentColor = theme.primaryColor
                             ),
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Home,
-                                contentDescription = "Home",
-                                tint = Color.White,
-                                modifier = Modifier.size(32.dp)
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Receipt,
+                                    contentDescription = "Receipt",
+                                    tint = theme.primaryColor,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Show Receipt",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Back to Home Button
+                        Button(
+                            onClick = {
+                                viewModel.clearCartAndHidePayment()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White.copy(alpha = 0.2f),
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Home,
+                                    contentDescription = "Home",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Back to Home",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    // Show Receipt Dialog when button is clicked
+    if (showReceipt) {
+        ReceiptDialog(
+            viewModel = viewModel,
+            paymentMethod = paymentMethod,
+            onDismiss = { showReceipt = false }
+        )
     }
 }

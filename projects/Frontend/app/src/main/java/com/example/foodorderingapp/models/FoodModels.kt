@@ -37,7 +37,7 @@ enum class PaymentState {
 }
 
 enum class PaymentMethod {
-    CREDIT_CARD, CASH, COUPON
+    CREDIT_CARD, CASH, COUPON, SODEXO, MULTINET, EDENRED,
 }
 
 // =====================================================
@@ -199,6 +199,10 @@ class DemoFoodOrderingViewModel {
     var paymentState by mutableStateOf(PaymentState.NONE)
         private set
 
+    // ADD THIS: Track the selected payment method
+    var selectedPaymentMethod by mutableStateOf(PaymentMethod.CREDIT_CARD)
+        private set
+
     val cartTotal: Double
         get() = cartItems.sumOf { it.subtotal }
 
@@ -228,19 +232,21 @@ class DemoFoodOrderingViewModel {
         paymentState = PaymentState.NONE
     }
 
+    // UPDATED: Store the payment method
     fun processPayment(method: PaymentMethod) {
+        selectedPaymentMethod = method  // STORE THE PAYMENT METHOD FIRST!
         paymentState = PaymentState.PROCESSING
 
-        // Simulate payment processing
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            val isSuccess = (1..10).random() <= 8 // 80% success rate
-
+            val isSuccess = when(selectedPaymentMethod){
+                PaymentMethod.CASH,
+                PaymentMethod.CREDIT_CARD,
+                PaymentMethod.EDENRED -> true
+                else -> false
+            }
             if (isSuccess) {
                 paymentState = PaymentState.SUCCESS
-                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                    cartItems = emptyList()
-                    hidePayment()
-                }, 2000)
+                // selectedPaymentMethod is now stored and available
             } else {
                 paymentState = PaymentState.FAILED
             }
@@ -249,6 +255,11 @@ class DemoFoodOrderingViewModel {
 
     fun retryPayment() {
         paymentState = PaymentState.SELECTING
+    }
+
+    fun clearCartAndHidePayment() {
+        cartItems = emptyList()  // Clear cart
+        hidePayment()            // Close dialog
     }
 
     fun searchProducts(query: String): List<Product> {
@@ -260,5 +271,38 @@ class DemoFoodOrderingViewModel {
                         it.description.contains(query, ignoreCase = true)
             }
         }
+    }
+
+    // for the cartpage
+    var showCartDialog by mutableStateOf(false)
+        private set
+
+    fun showCart() {
+        showCartDialog = true
+    }
+
+    fun hideCart() {
+        showCartDialog = false
+    }
+
+    fun removeFromCart(productId: Int) {
+        cartItems = cartItems.filter { it.product.pid != productId }
+    }
+
+    fun updateQuantity(productId: Int, quantity: Int) {
+        if (quantity <= 0) {
+            removeFromCart(productId)
+        } else {
+            cartItems = cartItems.map {
+                if (it.product.pid == productId) {
+                    it.copy(quantity = quantity)
+                } else it
+            }
+        }
+    }
+
+    // Helper function to get cart items summary for payment dialog
+    fun getCartItemsSummary(): String {
+        return cartItems.joinToString(", ") { "${it.product.pname} x${it.quantity}" }
     }
 }

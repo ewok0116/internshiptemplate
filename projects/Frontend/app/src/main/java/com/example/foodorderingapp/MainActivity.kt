@@ -10,12 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.example.foodorderingapp.models.DemoFoodOrderingViewModel
 import com.example.foodorderingapp.models.PaymentState
-import com.example.foodorderingapp.ui.theme.MainScrollablePage
-import com.example.foodorderingapp.ui.theme.PaymentMethodDialog
-import com.example.foodorderingapp.ui.theme.PaymentProcessingDialog
-import com.example.foodorderingapp.ui.theme.PaymentSuccessDialog
-import com.example.foodorderingapp.ui.theme.PaymentFailedDialog
-import com.example.foodorderingapp.ui.theme.FoodOrderingAppTheme
+import com.example.foodorderingapp.ui.theme.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,12 +35,20 @@ fun FoodOrderingApp() {
     // Main Screen
     MainScrollablePage(viewModel = viewModel)
 
+    // Cart Dialog
+    if (viewModel.showCartDialog) {
+        CartPageDialog(viewModel = viewModel)
+    }
+
     // Payment Dialogs
     if (viewModel.showPaymentDialog) {
         when (viewModel.paymentState) {
             PaymentState.SELECTING -> PaymentMethodDialog(viewModel)
             PaymentState.PROCESSING -> PaymentProcessingDialog()
-            PaymentState.SUCCESS -> PaymentSuccessDialog(viewModel)
+            PaymentState.SUCCESS -> PaymentSuccessDialog(
+                viewModel = viewModel,
+                paymentMethod = viewModel.selectedPaymentMethod  // ← CRITICAL: Use selectedPaymentMethod
+            )
             PaymentState.FAILED -> PaymentFailedDialog(viewModel)
             PaymentState.NONE -> Unit
         }

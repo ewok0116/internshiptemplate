@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,17 +21,38 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.foodorderingapp.models.DemoFoodOrderingViewModel
 import com.example.foodorderingapp.models.Product
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScrollablePage(viewModel: DemoFoodOrderingViewModel) {
+    val theme = LocalAppTheme.current  // Get current theme
     var searchText by remember { mutableStateOf("") }
     var selectedCategoryId by remember { mutableStateOf<Int?>(null) }
+    var showSnackbar by remember { mutableStateOf(false) }
+    var snackbarMessage by remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show snackbar when needed
+    LaunchedEffect(showSnackbar) {
+        if (showSnackbar) {
+            launch {
+                snackbarHostState.showSnackbar(
+                    message = snackbarMessage,
+                    duration = SnackbarDuration.Indefinite
+                )
+            }
+            delay(800)
+            snackbarHostState.currentSnackbarData?.dismiss()
+            showSnackbar = false
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFFC680)) // Background color
+            .background(theme.backgroundColor) // Use theme background
     ) {
         Column(
             modifier = Modifier
@@ -61,50 +83,46 @@ fun MainScrollablePage(viewModel: DemoFoodOrderingViewModel) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(horizontal = 4.dp)
             ) {
-                // All button
                 item {
                     CategoryButton(
                         text = "All",
                         isSelected = selectedCategoryId == null,
                         onClick = {
                             selectedCategoryId = null
-                            searchText = "" // Clear search when switching category
+                            searchText = ""
                         }
                     )
                 }
 
-                // Hamburgers button
                 item {
                     CategoryButton(
                         text = "Hamburgers",
                         isSelected = selectedCategoryId == 1,
                         onClick = {
                             selectedCategoryId = 1
-                            searchText = "" // Clear search when switching category
+                            searchText = ""
                         }
                     )
                 }
 
-                // Drinks button
                 item {
                     CategoryButton(
                         text = "Drinks",
                         isSelected = selectedCategoryId == 2,
                         onClick = {
                             selectedCategoryId = 2
-                            searchText = "" // Clear search when switching category
+                            searchText = ""
                         }
                     )
                 }
 
-                // Extras button
                 item {
                     CategoryButton(
                         text = "Extras",
                         isSelected = selectedCategoryId == 3,
                         onClick = {
                             selectedCategoryId = 3
-                            searchText = "" // Clear search when switching category
+                            searchText = ""
                         }
                     )
                 }
@@ -117,7 +135,6 @@ fun MainScrollablePage(viewModel: DemoFoodOrderingViewModel) {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 val filteredProducts = if (selectedCategoryId != null) {
-                    // Filter by category first, then by search
                     val categoryProducts = viewModel.products.filter { it.cid == selectedCategoryId }
                     if (searchText.isNotBlank()) {
                         categoryProducts.filter {
@@ -128,44 +145,73 @@ fun MainScrollablePage(viewModel: DemoFoodOrderingViewModel) {
                         categoryProducts
                     }
                 } else {
-                    // Show all products, filtered by search if any
                     viewModel.searchProducts(searchText)
                 }
 
                 items(filteredProducts) { product ->
                     ProductCard(
                         product = product,
-                        onAddToCart = { viewModel.addToCart(product) }
+                        onAddToCart = {
+                            viewModel.addToCart(product)
+                            snackbarMessage = "✅ ${product.pname} added to cart!"
+                            showSnackbar = true
+                        }
                     )
                 }
             }
         }
 
-        // Shopping Cart Button (Floating)
+        // Shopping Cart Button with theme colors
         if (viewModel.cartItemCount > 0) {
             FloatingActionButton(
-                onClick = { viewModel.showPayment() },
+                onClick = { viewModel.showCart() },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(16.dp),
-                containerColor = Color(0xFFFF8C42)
+                    .padding(16.dp)
+                    .size(100.dp),
+                containerColor = theme.primaryColor // Use theme primary color
             ) {
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Text(
-                        text = "${viewModel.cartItemCount}",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
+                    Badge(
+                        modifier = Modifier.offset(x = 12.dp, y = (-5).dp)
+                            .size(32.dp)
+                    ) {
+                        Text(
+                            text = "${viewModel.cartItemCount}",
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.ShoppingCart,
+                        contentDescription = "Shopping Cart",
+                        tint = theme.textOnPrimary,
+                        modifier = Modifier.size(38.dp)
                     )
-                    Text(
-                        text = "Cart",
-                        color = Color.White,
-                        fontSize = 12.sp
-                    )
+
                 }
             }
         }
+
+        // Snackbar Host with theme success color
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp),
+            snackbar = { snackbarData ->
+                Snackbar(
+                    snackbarData = snackbarData,
+                    containerColor = theme.successColor, // Use theme success color
+                    contentColor = Color.White,
+                    shape = RoundedCornerShape(8.dp)
+                )
+            }
+        )
     }
 }
 
@@ -175,15 +221,16 @@ fun CategoryButton(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val theme = LocalAppTheme.current // Get current theme
+
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) Color(0xFFFF8C42) else Color.White,
-            contentColor = if (isSelected) Color.White else Color(0xFFFF8C42)
+            containerColor = if (isSelected) theme.primaryColor else Color.White,
+            contentColor = if (isSelected) theme.textOnPrimary else theme.primaryColor
         ),
         shape = RoundedCornerShape(20.dp),
-        modifier = Modifier
-            .height(40.dp),
+        modifier = Modifier.height(40.dp),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Text(
@@ -199,12 +246,14 @@ fun ProductCard(
     product: Product,
     onAddToCart: () -> Unit
 ) {
+    val theme = LocalAppTheme.current // Get current theme
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onAddToCart() },
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFFF8C42) // Orange color matching screenshot
+            containerColor = theme.cardColor // Use theme card color
         ),
         shape = RoundedCornerShape(8.dp)
     ) {
@@ -214,7 +263,6 @@ fun ProductCard(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Product Image (Emoji)
             Box(
                 modifier = Modifier
                     .size(60.dp)
@@ -235,18 +283,18 @@ fun ProductCard(
             ) {
                 Text(
                     text = product.pname,
-                    color = Color.White,
+                    color = theme.textOnPrimary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )
                 Text(
                     text = product.description,
-                    color = Color.White.copy(alpha = 0.9f),
+                    color = theme.textOnPrimary.copy(alpha = 0.9f),
                     fontSize = 12.sp
                 )
                 Text(
                     text = "${product.price} TL",
-                    color = Color.White,
+                    color = theme.textOnPrimary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
