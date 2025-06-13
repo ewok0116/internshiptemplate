@@ -337,25 +337,7 @@ fun PaymentFailedDialog(viewModel: DemoFoodOrderingViewModel) {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            // Back to Cart Button
-                            Button(
-                                onClick = {
-                                    viewModel.hidePayment()
-                                    viewModel.showCart()
-                                },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.Gray
-                                ),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    text = "Back to Cart",
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp
-                                )
-                            }
+
 
                             // Retry Button
                             Button(
