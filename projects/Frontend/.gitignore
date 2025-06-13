@@ -1,3 +1,31 @@
-.DS_Store
+# Gradle build files
 .gradle/
+build/
+app/build/
+*/build/
+
+# Generated files
+*.apk
+*.aab
+*.dex
+*.class
+
+# Local properties
+local.properties
+gradle.properties
+
+# IDE files
 .idea/
+*.iml
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Keystore files (if you have any)
+*.jks
+*.keystore
