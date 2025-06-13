@@ -1,4 +1,4 @@
-# Day 2 
+# Day 3
 
 ## ✅ Objectives
 - [x] Learned more about git
