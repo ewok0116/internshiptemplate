@@ -5,21 +5,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.Money
-import androidx.compose.material.icons.filled.LocalOffer
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -59,16 +50,19 @@ fun PaymentMethodDialog(viewModel: DemoFoodOrderingViewModel) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Back to Cart Button
-                    IconButton(
+                    Button(
                         onClick = {
                             viewModel.hidePayment()
                             viewModel.showCart()
-                        }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White.copy(alpha = 0.2f)
+                        )
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back to Cart",
-                            tint = theme.textOnPrimary
+                        Text(
+                            text = "⬅️ Back",
+                            color = Color.White,
+                            fontSize = 14.sp
                         )
                     }
 
@@ -82,7 +76,7 @@ fun PaymentMethodDialog(viewModel: DemoFoodOrderingViewModel) {
                     )
 
                     // Placeholder for symmetry
-                    Spacer(modifier = Modifier.width(48.dp))
+                    Spacer(modifier = Modifier.width(80.dp))
                 }
 
                 Text(
@@ -97,7 +91,7 @@ fun PaymentMethodDialog(viewModel: DemoFoodOrderingViewModel) {
 
                 // Payment Methods
                 PaymentMethodOption(
-                    icon = Icons.Default.CreditCard,
+                    emoji = "💳",
                     text = "5168 **** Credit Card",
                     isSelected = selectedPaymentMethod == PaymentMethod.CREDIT_CARD,
                     onClick = { selectedPaymentMethod = PaymentMethod.CREDIT_CARD }
@@ -106,7 +100,7 @@ fun PaymentMethodDialog(viewModel: DemoFoodOrderingViewModel) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 PaymentMethodOption(
-                    icon = Icons.Default.Money,
+                    emoji = "💵",
                     text = "Cash",
                     isSelected = selectedPaymentMethod == PaymentMethod.CASH,
                     onClick = { selectedPaymentMethod = PaymentMethod.CASH }
@@ -115,7 +109,7 @@ fun PaymentMethodDialog(viewModel: DemoFoodOrderingViewModel) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 PaymentMethodOption(
-                    icon = Icons.Default.LocalOffer,
+                    emoji = "🎫",
                     text = "Coupon",
                     isSelected = selectedPaymentMethod == PaymentMethod.COUPON,
                     onClick = { selectedPaymentMethod = PaymentMethod.COUPON }
@@ -124,7 +118,7 @@ fun PaymentMethodDialog(viewModel: DemoFoodOrderingViewModel) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 PaymentMethodOption(
-                    icon = Icons.Default.CreditCard,
+                    emoji = "💳",
                     text = "Sodexo",
                     isSelected = selectedPaymentMethod == PaymentMethod.SODEXO,
                     onClick = { selectedPaymentMethod = PaymentMethod.SODEXO }
@@ -133,7 +127,7 @@ fun PaymentMethodDialog(viewModel: DemoFoodOrderingViewModel) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 PaymentMethodOption(
-                    icon = Icons.Default.CreditCard,
+                    emoji = "💳",
                     text = "Multinet",
                     isSelected = selectedPaymentMethod == PaymentMethod.MULTINET,
                     onClick = { selectedPaymentMethod = PaymentMethod.MULTINET }
@@ -142,7 +136,7 @@ fun PaymentMethodDialog(viewModel: DemoFoodOrderingViewModel) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 PaymentMethodOption(
-                    icon = Icons.Default.CreditCard,
+                    emoji = "💳",
                     text = "Edenred",
                     isSelected = selectedPaymentMethod == PaymentMethod.EDENRED,
                     onClick = { selectedPaymentMethod = PaymentMethod.EDENRED }
@@ -161,7 +155,7 @@ fun PaymentMethodDialog(viewModel: DemoFoodOrderingViewModel) {
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        text = "Pay Now",
+                        text = "💰 Pay Now",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
                     )
@@ -173,7 +167,7 @@ fun PaymentMethodDialog(viewModel: DemoFoodOrderingViewModel) {
 
 @Composable
 fun PaymentMethodOption(
-    icon: ImageVector,
+    emoji: String,
     text: String,
     isSelected: Boolean,
     onClick: () -> Unit
@@ -205,14 +199,11 @@ fun PaymentMethodOption(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(24.dp)
+        Text(
+            text = emoji,
+            fontSize = 24.sp,
+            modifier = Modifier.padding(end = 8.dp)
         )
-
-        Spacer(modifier = Modifier.width(8.dp))
 
         Text(
             text = text,
@@ -252,7 +243,7 @@ fun PaymentProcessingDialog() {
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = "Processing Payment...",
+                    text = "⏳ Processing Payment...",
                     color = Color.White,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
@@ -283,7 +274,7 @@ fun PaymentFailedDialog(viewModel: DemoFoodOrderingViewModel) {
             Column {
                 // Header
                 Text(
-                    text = "Payment Failed",
+                    text = "❌ Payment Failed",
                     color = theme.textOnPrimary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
@@ -306,20 +297,10 @@ fun PaymentFailedDialog(viewModel: DemoFoodOrderingViewModel) {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         // Warning Icon
-                        Box(
-                            modifier = Modifier
-                                .size(60.dp)
-                                .clip(RoundedCornerShape(30.dp))
-                                .background(Color.Black),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "!",
-                                color = Color.White,
-                                fontSize = 30.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                        Text(
+                            text = "⚠️",
+                            fontSize = 60.sp
+                        )
 
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -333,28 +314,21 @@ fun PaymentFailedDialog(viewModel: DemoFoodOrderingViewModel) {
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        Row(
+                        // Retry Button
+                        Button(
+                            onClick = { viewModel.retryPayment() },
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = theme.primaryColor
+                            ),
+                            shape = RoundedCornerShape(8.dp)
                         ) {
-
-
-                            // Retry Button
-                            Button(
-                                onClick = { viewModel.retryPayment() },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = theme.primaryColor
-                                ),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    text = "Retry",
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp
-                                )
-                            }
+                            Text(
+                                text = "🔄 Retry",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
                         }
                     }
                 }
@@ -388,7 +362,7 @@ fun PaymentSuccessDialog(
             Column {
                 // Header
                 Text(
-                    text = "Payment Successful",
+                    text = "✅ Payment Successful",
                     color = theme.textOnPrimary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
@@ -410,25 +384,13 @@ fun PaymentSuccessDialog(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Payment Successful",
-                                color = Color.White,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "Success",
-                                tint = Color.Green,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
+                        Text(
+                            text = "🎉 Payment Successful ✅",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
 
                         Spacer(modifier = Modifier.height(12.dp))
 
@@ -450,23 +412,11 @@ fun PaymentSuccessDialog(
                             ),
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Receipt,
-                                    contentDescription = "Receipt",
-                                    tint = theme.primaryColor,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Show Receipt",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp
-                                )
-                            }
+                            Text(
+                                text = "🧾 Show Receipt",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
                         }
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -483,22 +433,11 @@ fun PaymentSuccessDialog(
                             ),
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Home,
-                                    contentDescription = "Home",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Back to Home",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp
-                                )
-                            }
+                            Text(
+                                text = "🏠 Back to Home",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
                         }
                     }
                 }

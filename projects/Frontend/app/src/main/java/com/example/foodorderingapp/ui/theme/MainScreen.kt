@@ -1,8 +1,6 @@
+// Create this file: ui/MainScrollablePage.kt (or update your existing one)
 package com.example.foodorderingapp.ui.theme
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,7 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.ArrowBack // ADD THIS IMPORT
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,27 +21,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.foodorderingapp.FoodOrderingApp
 import com.example.foodorderingapp.models.DemoFoodOrderingViewModel
 import com.example.foodorderingapp.models.Product
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// UPDATED: Add onBackToStartup parameter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScrollablePage(
     viewModel: DemoFoodOrderingViewModel,
-    onBackToStartup: (() -> Unit)? = null // ADD THIS PARAMETER
+    onBackToStartup: (() -> Unit)? = null
 ) {
-    val theme = LocalAppTheme.current  // Get current theme
+    val theme = LocalAppTheme.current
     var searchText by remember { mutableStateOf("") }
     var selectedCategoryId by remember { mutableStateOf<Int?>(null) }
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Show snackbar when needed
     LaunchedEffect(showSnackbar) {
         if (showSnackbar) {
             launch {
@@ -58,13 +53,11 @@ fun MainScrollablePage(
         }
     }
 
-    // ADD: Column to include TopAppBar
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(theme.backgroundColor)
     ) {
-        // ADD: Top App Bar with Back Button
         if (onBackToStartup != null) {
             TopAppBar(
                 title = {
@@ -91,18 +84,16 @@ fun MainScrollablePage(
             )
         }
 
-        // EXISTING: Main content wrapped in Box
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(theme.backgroundColor) // Use theme background
+                .background(theme.backgroundColor)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
-                // Search Bar
                 OutlinedTextField(
                     value = searchText,
                     onValueChange = { searchText = it },
@@ -121,7 +112,6 @@ fun MainScrollablePage(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Category Filter Buttons
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(horizontal = 4.dp)
@@ -137,34 +127,12 @@ fun MainScrollablePage(
                         )
                     }
 
-                    item {
+                    items(viewModel.categories) { category ->
                         CategoryButton(
-                            text = "Hamburgers",
-                            isSelected = selectedCategoryId == 1,
+                            text = category.cname,
+                            isSelected = selectedCategoryId == category.cid,
                             onClick = {
-                                selectedCategoryId = 1
-                                searchText = ""
-                            }
-                        )
-                    }
-
-                    item {
-                        CategoryButton(
-                            text = "Drinks",
-                            isSelected = selectedCategoryId == 2,
-                            onClick = {
-                                selectedCategoryId = 2
-                                searchText = ""
-                            }
-                        )
-                    }
-
-                    item {
-                        CategoryButton(
-                            text = "Extras",
-                            isSelected = selectedCategoryId == 3,
-                            onClick = {
-                                selectedCategoryId = 3
+                                selectedCategoryId = category.cid
                                 searchText = ""
                             }
                         )
@@ -173,7 +141,6 @@ fun MainScrollablePage(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Products List
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -204,7 +171,6 @@ fun MainScrollablePage(
                 }
             }
 
-            // Shopping Cart Button with theme colors
             if (viewModel.cartItemCount > 0) {
                 FloatingActionButton(
                     onClick = { viewModel.showCart() },
@@ -212,7 +178,7 @@ fun MainScrollablePage(
                         .align(Alignment.BottomEnd)
                         .padding(16.dp)
                         .size(100.dp),
-                    containerColor = theme.primaryColor // Use theme primary color
+                    containerColor = theme.primaryColor
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -235,12 +201,10 @@ fun MainScrollablePage(
                             tint = theme.textOnPrimary,
                             modifier = Modifier.size(38.dp)
                         )
-
                     }
                 }
             }
 
-            // Snackbar Host with theme success color
             SnackbarHost(
                 hostState = snackbarHostState,
                 modifier = Modifier
@@ -249,14 +213,14 @@ fun MainScrollablePage(
                 snackbar = { snackbarData ->
                     Snackbar(
                         snackbarData = snackbarData,
-                        containerColor = theme.successColor, // Use theme success color
+                        containerColor = theme.successColor,
                         contentColor = Color.White,
                         shape = RoundedCornerShape(8.dp)
                     )
                 }
             )
         }
-    } // END: Column wrapper
+    }
 }
 
 @Composable
@@ -265,7 +229,7 @@ fun CategoryButton(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val theme = LocalAppTheme.current // Get current theme
+    val theme = LocalAppTheme.current
 
     Button(
         onClick = onClick,
@@ -290,14 +254,14 @@ fun ProductCard(
     product: Product,
     onAddToCart: () -> Unit
 ) {
-    val theme = LocalAppTheme.current // Get current theme
+    val theme = LocalAppTheme.current
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onAddToCart() },
         colors = CardDefaults.cardColors(
-            containerColor = theme.cardColor // Use theme card color
+            containerColor = theme.cardColor
         ),
         shape = RoundedCornerShape(8.dp)
     ) {
@@ -337,7 +301,7 @@ fun ProductCard(
                     fontSize = 12.sp
                 )
                 Text(
-                    text = "${product.price} TL",
+                    text = "₺${String.format("%.2f", product.price)}",
                     color = theme.textOnPrimary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp

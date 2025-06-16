@@ -5,9 +5,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.ui.graphics.Color
 
 // Create CompositionLocal for theme access throughout the app
 val LocalAppTheme = compositionLocalOf { ThemeManager.getCurrentTheme() }
+
+// Typography definition
+val AppTypography = Typography()
 
 @Composable
 fun FoodOrderingAppTheme(
@@ -35,7 +39,7 @@ fun FoodOrderingAppTheme(
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
-            typography = Typography(),
+            typography = AppTypography,
             content = content
         )
     }

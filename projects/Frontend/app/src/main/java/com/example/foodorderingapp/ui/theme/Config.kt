@@ -1,4 +1,3 @@
-// Add this to your MainActivity.kt or create a separate Config.kt file
 package com.example.foodorderingapp
 
 import android.content.Context
@@ -6,9 +5,6 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -54,17 +50,22 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
         TopAppBar(
             title = {
                 Text(
-                    text = "App Configuration",
+                    text = "⚙️ App Configuration",
                     fontWeight = FontWeight.Bold,
                     color = theme.textOnPrimary
                 )
             },
             navigationIcon = {
-                IconButton(onClick = onBackToStartup) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back",
-                        tint = theme.textOnPrimary
+                Button(
+                    onClick = onBackToStartup,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White.copy(alpha = 0.2f)
+                    )
+                ) {
+                    Text(
+                        text = "⬅️ Back",
+                        color = Color.White,
+                        fontSize = 14.sp
                     )
                 }
             },
@@ -314,14 +315,8 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Save,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Save Configuration",
+                    text = "💾 Save Configuration",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
