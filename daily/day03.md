@@ -1,4 +1,4 @@
-# Day 3
+# Day 3 - Finishing the Initial Design
 
 ## ✅ Objectives
 - [x] Learned more about git

@@ -1,4 +1,4 @@
-# Day 4
+# Day 4 - Starting DB and Web service
 
 ## ✅ Objectives
 - [x] Download SSMS

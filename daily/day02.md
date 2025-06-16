@@ -1,4 +1,4 @@
-# Day 2 
+# Day 2 - Get Familiar with Android Studio
 
 ## ✅ Objectives
 - [x] Learned more about git
