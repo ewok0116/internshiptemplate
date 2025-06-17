@@ -1,31 +1,136 @@
-# Gradle build files
-.gradle/
-build/
-app/build/
-*/build/
+# ===============================================
+# Frontend .gitignore - Android Kotlin App
+# ===============================================
 
-# Generated files
+# Android Build Files
 *.apk
-*.aab
+*.aar
 *.dex
 *.class
 
-# Local properties
+# Generated files
+bin/
+gen/
+out/
+
+# Gradle files
+.gradle/
+build/
 local.properties
-gradle.properties
 
-# IDE files
-.idea/
+# Android Studio & IntelliJ
+.navigation/
+captures/
 *.iml
-.vscode/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+.idea/caches
+.idea/modules.xml
+.idea/navEditor.xml
 
-# OS files
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# Keystore files (if you have any)
+# Security & Configuration
 *.jks
 *.keystore
+google-services.json
+
+# Build & Development
+.externalNativeBuild
+.cxx/
+proguard/
+
+# Freeline
+freeline.py
+freeline/
+freeline_project_description.json
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+fastlane/readme.md
+
+# Profiling & Performance
+*.hprof
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.directory
+*~
+
+# Development Tools
+*.log
+*.swp
+*.swo
+*~
+
+# Temporary & Backup Files
+*.tmp
+*.bak
+*.swp
+*~.nib
+.loadpath
+.factorypath
+
+# Version Control
+vcs.xml
+
+# Testing & Lint
+lint/intermediates/
+lint/generated/
+lint/outputs/
+lint/tmp/
+
+# Kotlin/Native
+*.kexe
+*.klib
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+
+# Node.js (if React Native added later)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Additional Android Files
+*.rej
+obj/
+
+# Eclipse
+.metadata
+.classpath
+.project
+.settings/
+.loadpath
+.recommenders
+.externalToolBuilders/
+*.launch
+.buildpath
+.target
+.tern-project
+.texlipse
+.springBeans
+.apt_generated/
+.apt_generated_test/
+.cache-main
+.scala_dependencies
+.worksheet

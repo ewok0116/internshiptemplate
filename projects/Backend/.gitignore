@@ -1,0 +1,99 @@
+# ===============================================
+# Backend .gitignore - MyDatabaseAPI
+# CRITICAL: Protects Database Credentials
+# ===============================================
+
+# 🚨 SENSITIVE FILES - NEVER COMMIT! 🚨
+appsettings.Development.json
+appsettings.Production.json
+appsettings.Local.json
+*.secrets.json
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+
+# Database files
+*.mdf
+*.ldf
+*.ndf
+*.db
+*.sqlite
+*.sqlite3
+*.bak
+*.backup
+
+# .NET Build outputs
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.suo
+*.log
+*.tmp
+
+# Visual Studio files
+*.rsuser
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Files built by Visual Studio
+*.ilk
+*.meta
+*.obj
+*.pch
+*.pdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+# NuGet Packages
+*.nupkg
+*.snupkg
+packages/
+*.nuget.props
+*.nuget.targets
+
+# Security & Certificates
+*.key
+*.pem
+*.crt
+*.cer
+*.p12
+*.pfx
+
+# Performance & Debugging
+*.hprof
+*.dmp
+*.etl
+
+# Development Tools
+*.sln.iml
+cache/
+temp/
+uploads/
+logs/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*~
