@@ -1,11 +1,11 @@
 
-#Week-2 
+##Week-2 
 
-- Day-5
+#Day-5
 
 I solved the connection problem. For authentication I used mixed which is both windows and SQL server authentication. After that, I wrote a basic code that approves my connection to the SSMS server. Then, I created a folder called MyDataBaseAPI which is the web service for my project. In the folder I have 2 files. DataBaseController.cs in which I keep the controllers (But I need to separate each controller for my code to become more clear for others) and Program.cs in which server is set to listen to port 5093 and configures controllers. Then I established connection with the SSMS and checked it on Postman. Thanks to Postman I was able to change the controller file in a wanted format. In other words, I had problems with the column, row names but with Postman it was easier to detect parts that needed change. Then, I started implementing my code in Android Studio, I was able to do the GET part, and to handle all the network connection I created a file called ApiService.kt that creates an interface that maps HTTP endpoints to Kotlin functions, moreover, this file acts as a translator that converts my app's Kotlin objects into JSON for sending to the server, makes HTTP calls to my  API endpoints, and then converts the JSON responses back into Kotlin objects that my Android app can use. However, I got stuck on POST part, therefore this part might need implementation. Then, before making any more changes, I decided to push it all to git, but I must have made a mistake that led me to lost the progress I made. Therefore, I needed to start over from establishing connection part. In the end I was able to achieve it but my code became messy. So, tomorrow I prioritize organizing my code first. 
 
-- Day-6
+#Day-6
 
 I started the day by trying to fix the POST issue. Then learning more about terms such as dependency injection, stateful and stateless became priority, therefore I started to study about them.
 
@@ -24,7 +24,7 @@ Stateless architecture: This time instead of several servers for each user there
 Another option could be hybrid architecture which combines stateless and stateful components within the same system, using each approach where it makes the most sense.
         Use stateful when real-time interactions and fast responses are needed ; use stateless when long term data storage is needed.
 
-- Day-7
+#Day-7
 
 I studied more about architectures, approaches and design patterns. In the end I gained a broader perspective on how to write a program. Until now, I was writing programs without any order.
 
@@ -35,6 +35,23 @@ I decided to create the folders and then I tried to write the codes starting fro
 
 Then I got some advices on how to impelent the project. After that, I decided to just start writing the code and seperate the code when I see there is a need for seperation. Tomorrow I will try that. 
 Other than that. I learned more about dependency injection. I thought the idea of DI was to get rid of unnecessary code and make the program flexible by just changing the dependencies and not touch the code. What I thought was true. However, the thing I missed was the usage of if else. By using DI I do not need those hundreds and hundreds of if else blocks. It is important because those blocks cover huge amount size if the project is big. In addition, it is hard for newcomers to understand the code. Moreover, if they change the code; there will be chaos. 
+
+#Day-8
+
+I chose one entity to work on which was user. from that I started seperating it. First I created the features folder in order to get the Vertical Slice architecture and added MediarT which injected some dependencies. MediarT mioght be unncessary for small project like mine but for bigger projects it is suggested and also it was a good practice for me to use it and it helped me to understand bit more about dependencies. 
+After that, I tried to test it on postman but login failed.
+In addition, I studied terms: Dependency Inversion, plug-in principle.
+Dependency Inversion: High-level modules such as files in domain level which contains business logic etc. should not rely on low level modules such as UserRepo in infrastructure layer, therefore both should depend on abstraction. Moreover, abstractions should not rely on details; details should rely on abstraction. Since modules are connected to abstract, it is low coupling meaning if in a project a low coupling design is wanted dependency inversion can be used. We should ask whether the dependency will be changed or not and if the answer is yes then it is logical to use Dependency Inversion since abstract module is used.
+When to use Dependency Injection?
+When to use Dependency Inversion?
+They are both used in cases when we want our code to be flexible. meaning we might change the dependencies later on. These to principle helps us with that. However, if we want to use ASP .NET there are frameworks that depends on dependency injection. In addition, unlike dependency inversion, dependency injection base upon a class, therefore if we want our modules 
+to be based upon a class we might choose injection instead of inversion since it uses abstract. Agasin, in inversion it is mostly used for decoupling.
+Note to self: Coupling measures how closely connected two modules  (classes, components, services) are and how much one module relies on the internal workings of another. 
+low coupling means it is flexible; tight is hanging one module forces changes in another.
+In addition, today I did the user part but could not tesst it because there was a connection problem with mac and the windows device. Tomorrow I will try it with another windows device to identify the problem.
+
+
+
 
 
 
