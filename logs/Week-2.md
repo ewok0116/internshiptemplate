@@ -50,6 +50,11 @@ Note to self: Coupling measures how closely connected two modules  (classes, com
 low coupling means it is flexible; tight is hanging one module forces changes in another.
 In addition, today I did the user part but could not tesst it because there was a connection problem with mac and the windows device. Tomorrow I will try it with another windows device to identify the problem.
 
+#Day9
+
+I finished the Vertical Slicing architecture by adding the features. I finished making Category, Products and Users. I started making Order and OrderItem but I wass not sure if they might create a problem for Android Studio part therefore did not want to commit it yet to main nor dev. I did not try it with Android Studio cuase I had connection isssues which led my Android Studio to crash. However, I tried GET from Postman ion which ended up with great results. 
+I need to do 2 things. One is to delete the useless code in Category, Products and Users. Why I didnt do it yet is because I wass scared that I might get error so before I finish the POST problem with Order and OrderItem I do not want to wreck the already working code. Second tassk I need to do is to seperate the service layer. Right now I know that all the handlers have the repeating code. I need to divide them in order to capture Clean Architecture and maybe use Dependency Injection. However, again because of the same reason. I do not want to wreck the code just yet. Anothe issue is that I worked with the computer that was provided to me and I had problems with connection on that which consumed my entire day last time so I also need to find a solution to that situation aswell. In addition I created a new collection on Postman where I keep the Endpoints.
+
 
 
 
