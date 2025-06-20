@@ -1,16 +1,17 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure to listen on all interfaces and localhost
 builder.WebHost.UseUrls("http://0.0.0.0:5093", "http://localhost:5093");
 
-// Add services to the container.
+// Add services to the container
 builder.Services.AddControllers();
 
-// Add CORS services - VERY IMPORTANT for Android connections
+// MediatR 12.4.0+ için - artık ayrı package gerekmez
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+
+// Add CORS services
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAllOrigins", policy =>
@@ -32,12 +33,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Enable CORS FIRST - This is crucial for Android
 app.UseCors("AllowAllOrigins");
 app.UseRouting();
 app.UseAuthorization();
 app.MapControllers();
-
 app.MapGet("/", () => "Food Ordering API is running!");
 
 app.Run();
