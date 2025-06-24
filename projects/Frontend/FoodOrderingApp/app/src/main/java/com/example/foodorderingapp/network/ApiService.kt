@@ -1,20 +1,27 @@
-// Create this file: app/src/main/java/com/example/foodorderingapp/network/ApiService.kt
+// network/ApiService.kt - COMPLETE VERSION
 package com.example.foodorderingapp.network
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
 import com.google.gson.annotations.SerializedName
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import java.util.concurrent.TimeUnit
 
 // =====================================================
-// API DATA MODELS (matching your C# API responses)
+// API DATA MODELS
 // =====================================================
 
 data class ApiProduct(
     @SerializedName("id") val id: Int,
     @SerializedName("name") val name: String,
     @SerializedName("description") val description: String,
-    @SerializedName("price") val price: Double
+    @SerializedName("price") val price: Double,
+    @SerializedName("categoryId") val categoryId: Int? = null,
+    @SerializedName("isAvailable") val isAvailable: Boolean? = true
 )
 
 data class ApiCategory(
@@ -29,26 +36,39 @@ data class ApiUser(
     @SerializedName("email") val email: String
 )
 
-// Order creation models
+// Order creation models - Backend format
 data class CreateOrderRequest(
-    @SerializedName("UserId") val userId: Int,
-    @SerializedName("TotalAmount") val totalAmount: Double,
-    @SerializedName("DeliveryAddress") val deliveryAddress: String,
-    @SerializedName("PaymentMethod") val paymentMethod: String,
-    @SerializedName("OrderItems") val orderItems: List<CreateOrderItemRequest>
+    @SerializedName("userId") val userId: Int,
+    @SerializedName("deliveryAddress") val deliveryAddress: String,
+    @SerializedName("paymentMethod") val paymentMethod: String,
+    @SerializedName("orderItems") val orderItems: List<CreateOrderItemRequest>
 )
 
 data class CreateOrderItemRequest(
-    @SerializedName("ProductId") val productId: Int,
-    @SerializedName("Quantity") val quantity: Int,
-    @SerializedName("UnitPrice") val unitPrice: Double,
-    @SerializedName("TotalPrice") val totalPrice: Double
+    @SerializedName("productId") val productId: Int,
+    @SerializedName("quantity") val quantity: Int
 )
 
+// Backend response
 data class CreateOrderResponse(
-    @SerializedName("OrderId") val orderId: Int,
-    @SerializedName("Message") val message: String,
-    @SerializedName("OrderDate") val orderDate: String
+    @SerializedName("orderId") val orderId: Int,
+    @SerializedName("orderStatus") val orderStatus: String,
+    @SerializedName("totalAmount") val totalAmount: Double,
+    @SerializedName("orderDate") val orderDate: String,
+    @SerializedName("deliveryAddress") val deliveryAddress: String,
+    @SerializedName("paymentMethod") val paymentMethod: String,
+    @SerializedName("orderItems") val orderItems: List<CreatedOrderItemDto>,
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("message") val message: String
+)
+
+data class CreatedOrderItemDto(
+    @SerializedName("id") val id: Int,
+    @SerializedName("productId") val productId: Int,
+    @SerializedName("productName") val productName: String,
+    @SerializedName("quantity") val quantity: Int,
+    @SerializedName("unitPrice") val unitPrice: Double,
+    @SerializedName("totalPrice") val totalPrice: Double
 )
 
 data class ConnectionTestResponse(
@@ -74,28 +94,60 @@ interface FoodOrderingApiService {
     @GET("api/Database/users")
     suspend fun getUsers(): List<ApiUser>
 
-    @POST("api/Database/orders")
+    // FIXED ENDPOINT - Backend'inizle aynı
+    @POST("api/orders")
+    @Headers("Content-Type: application/json")
     suspend fun createOrder(@Body request: CreateOrderRequest): CreateOrderResponse
+
+    @GET("api/orders")
+    suspend fun getOrders(@Query("userId") userId: Int? = null): List<CreateOrderResponse>
 }
 
 // =====================================================
-// API CLIENT SINGLETON
+// API CLIENT
 // =====================================================
 
 object ApiClient {
     private var retrofit: Retrofit? = null
     private var apiService: FoodOrderingApiService? = null
+    private var currentBaseUrl: String? = null
 
     fun initialize(baseUrl: String) {
-        // Ensure baseUrl ends with /
-        val formattedUrl = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
+        try {
+            val formattedUrl = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
 
-        retrofit = Retrofit.Builder()
-            .baseUrl(formattedUrl)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
+            if (currentBaseUrl == formattedUrl && apiService != null) {
+                return
+            }
 
-        apiService = retrofit?.create(FoodOrderingApiService::class.java)
+            val loggingInterceptor = HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BODY
+            }
+
+            val okHttpClient = OkHttpClient.Builder()
+                .addInterceptor(loggingInterceptor)
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .build()
+
+            val gson = GsonBuilder()
+                .setLenient()
+                .serializeNulls()
+                .create()
+
+            retrofit = Retrofit.Builder()
+                .baseUrl(formattedUrl)
+                .client(okHttpClient)
+                .addConverterFactory(GsonConverterFactory.create(gson))
+                .build()
+
+            apiService = retrofit?.create(FoodOrderingApiService::class.java)
+            currentBaseUrl = formattedUrl
+
+        } catch (e: Exception) {
+            throw RuntimeException("Failed to initialize API client: ${e.message}", e)
+        }
     }
 
     fun getApiService(): FoodOrderingApiService {
@@ -106,8 +158,13 @@ object ApiClient {
         return apiService != null
     }
 
+    fun getCurrentBaseUrl(): String? {
+        return currentBaseUrl
+    }
+
     fun reset() {
         retrofit = null
         apiService = null
+        currentBaseUrl = null
     }
 }
