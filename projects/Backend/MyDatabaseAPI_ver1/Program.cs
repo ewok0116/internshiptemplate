@@ -1,4 +1,10 @@
 using System.Reflection;
+using DotNetEnv;
+using MyFoodOrderingAPI.Core.Interfaces;           // 🎯 ADD - For IUserRepository
+using MyFoodOrderingAPI.Infrastructure.Repositories; // 🎯 ADD - For UserRepository
+
+// Load .env file FIRST - add this line at the very beginning
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +16,11 @@ builder.Services.AddControllers();
 
 // MediatR 12.4.0+ için - artık ayrı package gerekmez
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+
+// 🎯 ADD THIS LINE - Register the repository for dependency injection
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+// Add this line after the UserRepository registration
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 // Add CORS services
 builder.Services.AddCors(options =>
@@ -27,6 +38,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -37,6 +49,7 @@ app.UseCors("AllowAllOrigins");
 app.UseRouting();
 app.UseAuthorization();
 app.MapControllers();
+
 app.MapGet("/", () => "Food Ordering API is running!");
 
 app.Run();

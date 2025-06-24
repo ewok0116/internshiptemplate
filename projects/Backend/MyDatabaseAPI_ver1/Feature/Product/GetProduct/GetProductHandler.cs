@@ -1,29 +1,47 @@
-
-// Features/Products/GetProducts/GetProductsHandler.cs
 using MediatR;
-using Microsoft.Data.SqlClient;
-using MyFoodOrderingAPI.Core.Entities;
+using MyFoodOrderingAPI.Core.Interfaces;
+using MyFoodOrderingAPI.Core.Models;
 
 namespace MyFoodOrderingAPI.Features.Products.GetProducts
 {
     public class GetProductsHandler : IRequestHandler<GetProductsQuery, GetProductsResponse>
     {
-        private readonly string _connectionString;
+        // 🎯 DI - Inject repository instead of IConfiguration
+        private readonly IProductRepository _productRepository;
+        private readonly ILogger<GetProductsHandler> _logger;
 
-        public GetProductsHandler(IConfiguration configuration)
+        public GetProductsHandler(
+            IProductRepository productRepository,
+            ILogger<GetProductsHandler> logger)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection") ??
-                throw new InvalidOperationException("Connection string not found.");
+            _productRepository = productRepository;
+            _logger = logger;
         }
 
         public async Task<GetProductsResponse> Handle(GetProductsQuery request, CancellationToken cancellationToken)
         {
             try
             {
-                // 1. Database'den Entity'leri çek
-                var productEntities = await GetProductsFromDatabaseAsync(request, cancellationToken);
+                _logger.LogInformation("Retrieving products with search term: {SearchTerm}, category: {CategoryId}", 
+                    request.SearchTerm, request.CategoryId);
 
-                // 2. Entity'lerden DTO'ya dönüştür
+                // 🎯 Create filter from request
+                var filter = new ProductFilter
+                {
+                    SearchTerm = request.SearchTerm,
+                    CategoryId = request.CategoryId,
+                    MinPrice = request.MinPrice,
+                    MaxPrice = request.MaxPrice,
+                    IsAvailable = request.IsAvailable,
+                    PageNumber = 1, // You can add pagination to GetProductsQuery if needed
+                    PageSize = 100  // Or use request parameters
+                };
+
+                // 🎯 Use repository instead of direct SQL
+                var productEntities = await _productRepository.GetProductsAsync(filter, cancellationToken);
+                var totalCount = await _productRepository.GetProductsCountAsync(filter, cancellationToken);
+
+                // 🎯 Same DTO mapping as before
                 var productDtos = productEntities.Select(entity => new ProductDto
                 {
                     Id = entity.Id,
@@ -36,106 +54,30 @@ namespace MyFoodOrderingAPI.Features.Products.GetProducts
                     CreatedAt = entity.CreatedAt
                 }).ToList();
 
+                _logger.LogInformation("Successfully retrieved {Count} products out of {TotalCount} total", 
+                    productDtos.Count, totalCount);
+
                 return new GetProductsResponse
                 {
                     Products = productDtos,
-                    TotalCount = productDtos.Count,
+                    TotalCount = totalCount, // 🎯 Now using actual count from database
                     Success = true,
                     Message = "Products retrieved successfully"
                 };
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error retrieving products with search term: {SearchTerm}", request.SearchTerm);
                 return new GetProductsResponse
                 {
                     Success = false,
-                    Message = ex.Message
+                    Message = "An error occurred while retrieving products"
                 };
             }
         }
 
-        private async Task<List<Product>> GetProductsFromDatabaseAsync(GetProductsQuery request, CancellationToken cancellationToken)
-        {
-            var products = new List<Product>();
-            var query = BuildSqlQuery(request);
-
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync(cancellationToken);
-            using var command = new SqlCommand(query.Sql, connection);
-            
-            // Add parameters
-            foreach (var param in query.Parameters)
-            {
-                command.Parameters.AddWithValue(param.Key, param.Value);
-            }
-
-            using var reader = await command.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                // ✅ FIXED: Using your actual column names
-                var product = new Product(
-                    id: Convert.ToInt32(reader["PID"]),
-                    name: reader["PName"]?.ToString() ?? "",
-                    description: reader["PDescription"]?.ToString() ?? "",
-                    price: Convert.ToDecimal(reader["Price"]),
-                    imageUrl: reader["PImageUrl"]?.ToString() ?? "",
-                    categoryId: reader["CID"] != DBNull.Value ? Convert.ToInt32(reader["CID"]) : 0,
-                    isAvailable: reader["IsAvailable"] != DBNull.Value ? Convert.ToBoolean(reader["IsAvailable"]) : true,
-                    createdAt: reader["CreatedAt"] != DBNull.Value ? Convert.ToDateTime(reader["CreatedAt"]) : DateTime.UtcNow
-                );
-                products.Add(product);
-            }
-
-            return products;
-        }
-
-        private (string Sql, Dictionary<string, object> Parameters) BuildSqlQuery(GetProductsQuery request)
-        {
-            var conditions = new List<string>();
-            var parameters = new Dictionary<string, object>();
-
-            // ✅ FIXED: Using your actual column names
-            var sql = "SELECT PID, PName, PDescription, Price, PImageUrl, CID, IsAvailable, CreatedAt FROM Products";
-
-            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
-            {
-                conditions.Add("(PName LIKE @SearchTerm OR PDescription LIKE @SearchTerm)");
-                parameters["@SearchTerm"] = $"%{request.SearchTerm}%";
-            }
-
-            if (request.CategoryId.HasValue)
-            {
-                conditions.Add("CID = @CategoryId");
-                parameters["@CategoryId"] = request.CategoryId.Value;
-            }
-
-            if (request.MinPrice.HasValue)
-            {
-                conditions.Add("Price >= @MinPrice");
-                parameters["@MinPrice"] = request.MinPrice.Value;
-            }
-
-            if (request.MaxPrice.HasValue)
-            {
-                conditions.Add("Price <= @MaxPrice");
-                parameters["@MaxPrice"] = request.MaxPrice.Value;
-            }
-
-            // ✅ FIXED: Using IsAvailable instead of IsActive
-            if (request.IsAvailable.HasValue)
-            {
-                conditions.Add("IsAvailable = @IsAvailable");
-                parameters["@IsAvailable"] = request.IsAvailable.Value;
-            }
-
-            if (conditions.Any())
-            {
-                sql += " WHERE " + string.Join(" AND ", conditions);
-            }
-
-            sql += " ORDER BY PName";
-
-            return (sql, parameters);
-        }
+        // 🗑️ REMOVED - GetProductsFromDatabaseAsync method
+        // 🗑️ REMOVED - BuildSqlQuery method
+        // This logic is now in ProductRepository!
     }
 }

@@ -16,14 +16,6 @@ namespace MyFoodOrderingAPI.Core.Entities
             CreatedAt = DateTime.UtcNow;
         }
 
-        // Yeni user oluştururken kullanılacak constructor
-        public User(string name, string email)
-        {
-            Name = name ?? throw new ArgumentNullException(nameof(name));
-            Email = email ?? throw new ArgumentNullException(nameof(email));
-            CreatedAt = DateTime.UtcNow;
-        }
-
         // Business methods
         public void UpdateEmail(string newEmail)
         {
