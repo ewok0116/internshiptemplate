@@ -6,14 +6,14 @@ namespace MyFoodOrderingAPI.Features.OrderItems.GetOrderItems
         public List<OrderItemDetailDto> OrderItems { get; set; } = new();
         public decimal TotalAmount { get; set; }
         public int TotalItems { get; set; }
-        public bool Success { get; set; } = true;
+        public bool Success { get; set; }
         public string Message { get; set; } = "";
     }
 
     public class GetOrderItemResponse
     {
         public OrderItemDetailDto? OrderItem { get; set; }
-        public bool Success { get; set; } = true;
+        public bool Success { get; set; }
         public string Message { get; set; } = "";
     }
 

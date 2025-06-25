@@ -1,145 +1,164 @@
+
 // Features/Orders/GetOrders/GetOrdersHandler.cs
 using MediatR;
-using Microsoft.Data.SqlClient;
-using MyFoodOrderingAPI.Core.Entities;
+using MyFoodOrderingAPI.Core.Interfaces;
+using MyFoodOrderingAPI.Core.Models;
 
 namespace MyFoodOrderingAPI.Features.Orders.GetOrders
 {
     public class GetOrdersHandler : IRequestHandler<GetOrdersQuery, GetOrdersResponse>
     {
-        private readonly string _connectionString;
+        private readonly IOrderRepository _orderRepository;
+        private readonly IOrderItemRepository _orderItemRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly ILogger<GetOrdersHandler> _logger;
 
-        public GetOrdersHandler(IConfiguration configuration)
+        public GetOrdersHandler(
+            IOrderRepository orderRepository,
+            IOrderItemRepository orderItemRepository,
+            IUserRepository userRepository,
+            ILogger<GetOrdersHandler> logger)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection") ??
-                throw new InvalidOperationException("Connection string not found.");
+            _orderRepository = orderRepository;
+            _orderItemRepository = orderItemRepository;
+            _userRepository = userRepository;
+            _logger = logger;
         }
 
         public async Task<GetOrdersResponse> Handle(GetOrdersQuery request, CancellationToken cancellationToken)
         {
             try
             {
-                var orders = await GetOrdersFromDatabase(request, cancellationToken);
+                _logger.LogInformation("=== GetOrdersHandler Started ===");
+                _logger.LogInformation("Request - UserId: {UserId}, Status: {Status}, Page: {PageNumber}", 
+                    request.UserId, request.Status, request.PageNumber);
 
-                var orderDtos = new List<OrderSummaryDto>();
-                foreach (var order in orders)
+                // Create filter from request
+                var filter = new OrderFilter
                 {
-                    var itemCount = await GetOrderItemCount(order.Id, cancellationToken);
-                    var userName = await GetUserName(order.UserId, cancellationToken);
-                    
-                    orderDtos.Add(new OrderSummaryDto
+                    UserId = request.UserId,
+                    OrderStatus = request.Status,
+                    PageNumber = request.PageNumber,
+                    PageSize = request.PageSize,
+                    OrderDateFrom = request.OrderDateFrom,
+                    OrderDateTo = request.OrderDateTo,
+                    MinAmount = request.MinAmount,
+                    MaxAmount = request.MaxAmount,
+                    PaymentMethod = request.PaymentMethod
+                };
+
+                _logger.LogInformation("Getting orders from repository...");
+                var orderEntities = await _orderRepository.GetOrdersAsync(filter, cancellationToken);
+                _logger.LogInformation("✅ Successfully retrieved {Count} orders from database", orderEntities.Count);
+                
+                var totalCount = await _orderRepository.GetOrdersCountAsync(filter, cancellationToken);
+                _logger.LogInformation("✅ Total count: {TotalCount}", totalCount);
+
+                if (orderEntities.Count == 0)
+                {
+                    _logger.LogInformation("No orders found, returning empty response");
+                    return new GetOrdersResponse
                     {
-                        Id = order.Id,
-                        UserId = order.UserId,
-                        UserName = userName,
-                        OrderStatus = order.OrderStatus,
-                        TotalAmount = order.TotalAmount,
-                        DeliveryAddress = order.DeliveryAddress,
-                        OrderDate = order.OrderDate,
-                        PaymentMethod = order.PaymentMethod,
-                        ItemCount = itemCount
-                    });
+                        Orders = new List<OrderSummaryDto>(),
+                        TotalCount = 0,
+                        PageNumber = request.PageNumber,
+                        PageSize = request.PageSize,
+                        TotalPages = 0,
+                        Success = true,
+                        Message = "No orders found"
+                    };
                 }
+
+                // Build DTOs
+                var orderDtos = new List<OrderSummaryDto>();
+                
+                for (int i = 0; i < orderEntities.Count; i++)
+                {
+                    var order = orderEntities[i];
+                    _logger.LogDebug("Processing order {Index}/{Total} - OrderId: {OrderId}", 
+                        i + 1, orderEntities.Count, order.Id);
+
+                    try
+                    {
+                        // Get item count
+                        int itemCount = 0;
+                        try
+                        {
+                            var orderItems = await _orderItemRepository.GetOrderItemsByOrderIdAsync(order.Id, cancellationToken);
+                            itemCount = orderItems.Sum(oi => oi.Quantity);
+                        }
+                        catch (Exception itemEx)
+                        {
+                            _logger.LogWarning(itemEx, "Failed to get items for order {OrderId}, using 0", order.Id);
+                            itemCount = 0;
+                        }
+
+                        // Get user name
+                        string userName = "";
+                        try
+                        {
+                            var user = await _userRepository.GetUserByIdAsync(order.UserId, cancellationToken);
+                            userName = user?.Name ?? $"User {order.UserId}";
+                        }
+                        catch (Exception userEx)
+                        {
+                            _logger.LogWarning(userEx, "Failed to get user {UserId} for order {OrderId}", 
+                                order.UserId, order.Id);
+                            userName = $"User {order.UserId}";
+                        }
+
+                        // Create DTO
+                        var dto = new OrderSummaryDto
+                        {
+                            Id = order.Id,
+                            UserId = order.UserId,
+                            UserName = userName,
+                            OrderStatus = order.OrderStatus,
+                            TotalAmount = order.TotalAmount,
+                            DeliveryAddress = order.DeliveryAddress,
+                            OrderDate = order.OrderDate,
+                            PaymentMethod = order.PaymentMethod,
+                            ItemCount = itemCount
+                        };
+
+                        orderDtos.Add(dto);
+                    }
+                    catch (Exception orderProcessEx)
+                    {
+                        _logger.LogError(orderProcessEx, "❌ Failed to process order {OrderId}, skipping", order.Id);
+                    }
+                }
+
+                var totalPages = (int)Math.Ceiling((double)totalCount / request.PageSize);
+
+                _logger.LogInformation("✅ Successfully processed {ProcessedCount}/{TotalCount} orders", 
+                    orderDtos.Count, orderEntities.Count);
 
                 return new GetOrdersResponse
                 {
                     Orders = orderDtos,
-                    TotalCount = orderDtos.Count,
+                    TotalCount = totalCount,
+                    PageNumber = request.PageNumber,
+                    PageSize = request.PageSize,
+                    TotalPages = totalPages,
                     Success = true,
-                    Message = "Orders retrieved successfully"
+                    Message = $"Successfully retrieved {orderDtos.Count} orders"
                 };
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "❌ Critical error in GetOrdersHandler");
                 return new GetOrdersResponse
                 {
+                    Orders = new List<OrderSummaryDto>(),
+                    TotalCount = 0,
+                    PageNumber = request.PageNumber,
+                    PageSize = request.PageSize,
+                    TotalPages = 0,
                     Success = false,
-                    Message = ex.Message
+                    Message = $"Critical error: {ex.Message}"
                 };
             }
-        }
-
-        private async Task<List<Order>> GetOrdersFromDatabase(GetOrdersQuery request, CancellationToken cancellationToken)
-        {
-            var orders = new List<Order>();
-            var query = BuildSqlQuery(request);
-
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync(cancellationToken);
-            using var command = new SqlCommand(query.Sql, connection);
-            
-            foreach (var param in query.Parameters)
-            {
-                command.Parameters.AddWithValue(param.Key, param.Value);
-            }
-
-            using var reader = await command.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var order = new Order(
-                    id: Convert.ToInt32(reader["OID"]),
-                    userId: Convert.ToInt32(reader["UID"]),
-                    orderStatus: reader["OrderStatus"]?.ToString() ?? "",
-                    totalAmount: Convert.ToDecimal(reader["TotalAmount"]),
-                    deliveryAddress: reader["DeliveryAddress"]?.ToString() ?? "",
-                    orderDate: Convert.ToDateTime(reader["OrderDate"]),
-                    paymentMethod: reader["PaymentMethod"]?.ToString() ?? ""
-                );
-                orders.Add(order);
-            }
-
-            return orders;
-        }
-
-        private async Task<int> GetOrderItemCount(int orderId, CancellationToken cancellationToken)
-        {
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync(cancellationToken);
-            using var command = new SqlCommand("SELECT SUM(Quantity) FROM OrderItems WHERE OID = @OrderId", connection);
-            command.Parameters.AddWithValue("@OrderId", orderId);
-            
-            var result = await command.ExecuteScalarAsync(cancellationToken);
-            return result == DBNull.Value ? 0 : Convert.ToInt32(result);
-        }
-
-        private async Task<string> GetUserName(int userId, CancellationToken cancellationToken)
-        {
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync(cancellationToken);
-            using var command = new SqlCommand("SELECT UName FROM Users WHERE UID = @UserId", connection);
-            command.Parameters.AddWithValue("@UserId", userId);
-            
-            var result = await command.ExecuteScalarAsync(cancellationToken);
-            return result?.ToString() ?? "";
-        }
-
-        private (string Sql, Dictionary<string, object> Parameters) BuildSqlQuery(GetOrdersQuery request)
-        {
-            var conditions = new List<string>();
-            var parameters = new Dictionary<string, object>();
-
-            var sql = "SELECT OID, UID, OrderStatus, TotalAmount, DeliveryAddress, OrderDate, PaymentMethod FROM Orders";
-
-            if (request.UserId.HasValue)
-            {
-                conditions.Add("UID = @UserId");
-                parameters["@UserId"] = request.UserId.Value;
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.Status))
-            {
-                conditions.Add("OrderStatus = @Status");
-                parameters["@Status"] = request.Status;
-            }
-
-            if (conditions.Any())
-            {
-                sql += " WHERE " + string.Join(" AND ", conditions);
-            }
-
-            sql += " ORDER BY OrderDate DESC";
-
-            return (sql, parameters);
         }
     }
 }

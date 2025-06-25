@@ -1,6 +1,8 @@
+// ui/theme/ThemeManager.kt
 package com.example.foodorderingapp.ui.theme
-import com.example.foodorderingapp.BuildConfig
+
 import androidx.compose.ui.graphics.Color
+
 object ThemeManager {
 
     data class AppTheme(
@@ -41,10 +43,10 @@ object ThemeManager {
     )
 
     fun getCurrentTheme(): AppTheme {
-        return when (BuildConfig.COMPANY_THEME) {
+        return when (com.example.foodorderingapp.BuildConfig.COMPANY_THEME) {
             "ORANGE" -> orangeTheme
             "GREEN" -> greenTheme
-            "PURPLE"-> purpleTheme
+            "PURPLE" -> purpleTheme
             else -> orangeTheme // Default fallback
         }
     }

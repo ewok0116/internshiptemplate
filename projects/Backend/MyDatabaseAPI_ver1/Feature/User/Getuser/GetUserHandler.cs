@@ -1,76 +1,79 @@
 using MediatR;
-using Microsoft.Data.SqlClient;
-using MyFoodOrderingAPI.Core.Entities;
+using MyFoodOrderingAPI.Core.Interfaces;
+using MyFoodOrderingAPI.Core.Models;
 
 namespace MyFoodOrderingAPI.Features.Users.GetUsers
 {
     public class GetUsersHandler : IRequestHandler<GetUsersQuery, GetUsersResponse>
     {
-        private readonly string _connectionString;
+        private readonly IUserRepository _userRepository;
+        private readonly ILogger<GetUsersHandler> _logger;
 
-        public GetUsersHandler(IConfiguration configuration)
+        public GetUsersHandler(
+            IUserRepository userRepository,
+            ILogger<GetUsersHandler> logger)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection") ??
-                throw new InvalidOperationException("Connection string not found.");
+            _userRepository = userRepository;
+            _logger = logger;
         }
 
         public async Task<GetUsersResponse> Handle(GetUsersQuery request, CancellationToken cancellationToken)
         {
             try
             {
-                // 1. Database'den Entity'leri çek
-                var userEntities = await GetUsersFromDatabaseAsync(cancellationToken);
+                _logger.LogInformation("Starting to retrieve users with search term: {SearchTerm}, page: {PageNumber}", 
+                    request.SearchTerm, request.PageNumber);
+
+                // Create filter from request
+                var filter = new UserFilter
+                {
+                    SearchTerm = request.SearchTerm,
+                    PageNumber = request.PageNumber,
+                    PageSize = request.PageSize
+                };
+
+                _logger.LogInformation("Created filter, calling repository...");
+
+                // Use repository instead of direct SQL
+                var userEntities = await _userRepository.GetUsersAsync(filter, cancellationToken);
                 
-                // 2. Entity'lerden DTO'ya dönüştür
+                _logger.LogInformation("Got {Count} users from repository", userEntities.Count);
+                
+                var totalCount = await _userRepository.GetUsersCountAsync(filter, cancellationToken);
+                
+                _logger.LogInformation("Total count: {TotalCount}", totalCount);
+
+                // Map entities to DTOs
                 var userDtos = userEntities.Select(entity => new UserDto
                 {
                     Id = entity.Id,
                     Name = entity.Name,
                     Email = entity.Email
                 }).ToList();
-                
+
+                _logger.LogInformation("Successfully retrieved {Count} users out of {TotalCount} total", 
+                    userDtos.Count, totalCount);
+
                 return new GetUsersResponse
                 {
                     Users = userDtos,
-                    TotalCount = userDtos.Count,
+                    TotalCount = totalCount,
                     Success = true,
                     Message = "Users retrieved successfully"
                 };
             }
             catch (Exception ex)
             {
+                // 🎯 DETAILED ERROR LOGGING
+                _logger.LogError(ex, "DETAILED ERROR: {Message}. StackTrace: {StackTrace}", 
+                    ex.Message, ex.StackTrace);
+                
                 return new GetUsersResponse
                 {
                     Success = false,
-                    Message = ex.Message
+                    Message = $"Error: {ex.Message}" // 🎯 Return actual error message for debugging
                 };
             }
-        }
-
-        // ✅ Bu kısım değişti - Entity oluşturuyoruz
-        private async Task<List<User>> GetUsersFromDatabaseAsync(CancellationToken cancellationToken)
-        {
-            var users = new List<User>();
-            
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync(cancellationToken);
-            
-            using var command = new SqlCommand("SELECT UID, UName, UEmail FROM Users", connection);
-            using var reader = await command.ExecuteReaderAsync(cancellationToken);
-            
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                // Entity oluştur (business logic ile)
-                var user = new User(
-                    id: Convert.ToInt32(reader["UID"]),
-                    name: reader["UName"]?.ToString() ?? "",
-                    email: reader["UEmail"]?.ToString() ?? ""
-                );
-                
-                users.Add(user);
-            }
-            
-            return users;
         }
     }
 }

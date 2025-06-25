@@ -1,27 +1,41 @@
+
 // Features/Orders/CreateOrder/CreateOrderHandler.cs
 using MediatR;
-using Microsoft.Data.SqlClient;
+using MyFoodOrderingAPI.Core.Services;
+using MyFoodOrderingAPI.Core.Models;
+using MyFoodOrderingAPI.Core.Interfaces;
 
 namespace MyFoodOrderingAPI.Features.Orders.CreateOrder
 {
     public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, CreateOrderResponse>
     {
-        private readonly string _connectionString;
+        private readonly IOrderService _orderService;
+        private readonly IProductRepository _productRepository;
+        private readonly ILogger<CreateOrderHandler> _logger;
 
-        public CreateOrderHandler(IConfiguration configuration)
+        public CreateOrderHandler(
+            IOrderService orderService,
+            IProductRepository productRepository,
+            ILogger<CreateOrderHandler> logger)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection") ??
-                throw new InvalidOperationException("Connection string not found.");
+            _orderService = orderService;
+            _productRepository = productRepository;
+            _logger = logger;
         }
 
         public async Task<CreateOrderResponse> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
         {
             try
             {
+                _logger.LogInformation("=== CreateOrderHandler Started ===");
+                _logger.LogInformation("Creating order for user {UserId} with {ItemCount} items", 
+                    request.UserId, request.OrderItems?.Count ?? 0);
+
                 // ✅ VALIDATE INPUT
                 var validationResult = ValidateRequest(request);
                 if (!validationResult.IsValid)
                 {
+                    _logger.LogWarning("Validation failed: {ErrorMessage}", validationResult.ErrorMessage);
                     return new CreateOrderResponse
                     {
                         Success = false,
@@ -29,74 +43,104 @@ namespace MyFoodOrderingAPI.Features.Orders.CreateOrder
                     };
                 }
 
-                // ✅ VALIDATE USER EXISTS
-                if (!await UserExists(request.UserId, cancellationToken))
+                // 🎯 Create service request model
+                var createOrderRequest = new CreateOrderRequest
                 {
-                    return new CreateOrderResponse
+                    UserId = request.UserId,
+                    DeliveryAddress = request.DeliveryAddress,
+                    PaymentMethod = request.PaymentMethod,
+                    Items = request.OrderItems.Select(item => new OrderItemRequest
                     {
-                        Success = false,
-                        Message = $"User {request.UserId} not found"
-                    };
-                }
-
-                // ✅ VALIDATE PRODUCTS AND GET PRICES (FROM YOUR PPrice COLUMN)
-                var productInfo = await ValidateAndGetProductInfo(request.OrderItems, cancellationToken);
-                
-                // ✅ CALCULATE TOTAL AMOUNT
-                decimal totalAmount = 0;
-                foreach (var item in request.OrderItems)
-                {
-                    var productPrice = productInfo[item.ProductId].Price;
-                    var itemTotal = item.Quantity * productPrice;
-                    totalAmount += itemTotal;
-                }
-                
-                // ✅ SAVE ORDER AND ORDER ITEMS WITH TRANSACTION
-                var orderId = await SaveOrderWithItems(request, productInfo, totalAmount, cancellationToken);
-
-                // ✅ BUILD RESPONSE WITH ORDER ITEM DETAILS
-                var orderItemDtos = new List<CreatedOrderItemDto>();
-                for (int i = 0; i < request.OrderItems.Count; i++)
-                {
-                    var item = request.OrderItems[i];
-                    var productPrice = productInfo[item.ProductId].Price;
-                    var itemTotal = item.Quantity * productPrice;
-                    
-                    orderItemDtos.Add(new CreatedOrderItemDto
-                    {
-                        Id = i + 1,
                         ProductId = item.ProductId,
-                        ProductName = productInfo[item.ProductId].Name,
-                        Quantity = item.Quantity,
-                        UnitPrice = productPrice,
-                        TotalPrice = itemTotal
-                    });
+                        Quantity = item.Quantity
+                    }).ToList()
+                };
+
+                _logger.LogInformation("Calling OrderService.CreateOrderAsync...");
+
+                // 🎯 Use service to create order
+                var order = await _orderService.CreateOrderAsync(createOrderRequest, cancellationToken);
+                
+                _logger.LogInformation("✅ Order created with ID: {OrderId}", order.Id);
+
+                // 🎯 Get order with details for response
+                _logger.LogInformation("Getting order details...");
+                var orderWithDetails = await _orderService.GetOrderWithDetailsAsync(order.Id, cancellationToken);
+
+                // ✅ BUILD RESPONSE WITH ORDER ITEM DETAILS (with product names)
+                var orderItemDtos = new List<CreatedOrderItemDto>();
+                if (orderWithDetails?.OrderItems != null)
+                {
+                    _logger.LogInformation("Processing {Count} order items", orderWithDetails.OrderItems.Count);
+                    
+                    for (int i = 0; i < orderWithDetails.OrderItems.Count; i++)
+                    {
+                        var item = orderWithDetails.OrderItems[i];
+                        
+                        // Get product name
+                        string productName = "";
+                        try
+                        {
+                            var product = await _productRepository.GetProductByIdAsync(item.ProductId, cancellationToken);
+                            productName = product?.Name ?? $"Product {item.ProductId}";
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to get product name for {ProductId}", item.ProductId);
+                            productName = $"Product {item.ProductId}";
+                        }
+                        
+                        orderItemDtos.Add(new CreatedOrderItemDto
+                        {
+                            Id = item.Id,
+                            ProductId = item.ProductId,
+                            ProductName = productName,
+                            Quantity = item.Quantity,
+                            UnitPrice = item.UnitPrice,
+                            TotalPrice = item.TotalPrice
+                        });
+                    }
                 }
+
+                _logger.LogInformation("✅ Successfully created order {OrderId} for user {UserId} with total {TotalAmount}", 
+                    order.Id, request.UserId, order.TotalAmount);
 
                 return new CreateOrderResponse
                 {
-                    OrderId = orderId,
-                    OrderStatus = "Pending",
-                    TotalAmount = totalAmount,
-                    OrderDate = DateTime.UtcNow,
-                    DeliveryAddress = request.DeliveryAddress,
-                    PaymentMethod = request.PaymentMethod,
+                    OrderId = order.Id,
+                    OrderStatus = order.OrderStatus,
+                    TotalAmount = order.TotalAmount,
+                    OrderDate = order.OrderDate,
+                    DeliveryAddress = order.DeliveryAddress,
+                    PaymentMethod = order.PaymentMethod,
                     OrderItems = orderItemDtos,
                     Success = true,
                     Message = "Order created successfully"
                 };
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
+                // Business validation errors
+                _logger.LogWarning(ex, "❌ Validation error creating order for user {UserId}: {Message}", 
+                    request.UserId, ex.Message);
                 return new CreateOrderResponse
                 {
                     Success = false,
-                    Message = $"Failed to create order: {ex.Message}"
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                // Unexpected errors
+                _logger.LogError(ex, "❌ Critical error creating order for user {UserId}", request.UserId);
+                return new CreateOrderResponse
+                {
+                    Success = false,
+                    Message = $"Critical error: {ex.Message}"
                 };
             }
         }
 
-        // ✅ VALIDATE REQUEST INPUT
         private (bool IsValid, string ErrorMessage) ValidateRequest(CreateOrderCommand request)
         {
             if (request.UserId <= 0)
@@ -136,111 +180,6 @@ namespace MyFoodOrderingAPI.Features.Orders.CreateOrder
             }
 
             return (true, "");
-        }
-
-        // ✅ CHECK IF USER EXISTS
-        private async Task<bool> UserExists(int userId, CancellationToken cancellationToken)
-        {
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync(cancellationToken);
-
-            using var command = new SqlCommand("SELECT COUNT(*) FROM Users WHERE UID = @UserId", connection);
-            command.Parameters.AddWithValue("@UserId", userId);
-
-            var count = (int)await command.ExecuteScalarAsync(cancellationToken);
-            return count > 0;
-        }
-
-        // ✅ VALIDATE PRODUCTS AND GET INFO FROM YOUR DATABASE
-        private async Task<Dictionary<int, (string Name, decimal Price)>> ValidateAndGetProductInfo(
-            List<CreateOrderItemDto> items, 
-            CancellationToken cancellationToken)
-        {
-            var productInfo = new Dictionary<int, (string Name, decimal Price)>();
-
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync(cancellationToken);
-
-            foreach (var item in items)
-            {
-                using var command = new SqlCommand(
-                    "SELECT PName, Price FROM Products WHERE PID = @ProductId AND IsAvailable = 1", 
-                    connection);
-                command.Parameters.AddWithValue("@ProductId", item.ProductId);
-
-                using var reader = await command.ExecuteReaderAsync(cancellationToken);
-                if (await reader.ReadAsync(cancellationToken))
-                {
-                    var name = reader["PName"]?.ToString() ?? "";
-                    var price = Convert.ToDecimal(reader["Price"]);
-                    productInfo[item.ProductId] = (name, price);
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Product {item.ProductId} not found or not available");
-                }
-            }
-
-            return productInfo;
-        }
-
-        // ✅ SAVE WITH TRANSACTION - ALL OR NOTHING (WITHOUT CREATING OrderItem OBJECTS)
-        private async Task<int> SaveOrderWithItems(
-            CreateOrderCommand request,
-            Dictionary<int, (string Name, decimal Price)> productInfo,
-            decimal totalAmount,
-            CancellationToken cancellationToken)
-        {
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync(cancellationToken);
-            using var transaction = connection.BeginTransaction();
-
-            try
-            {
-                // Step 1: Save Order
-                var orderCommand = new SqlCommand(@"
-                    INSERT INTO Orders (UID, OrderStatus, TotalAmount, DeliveryAddress, OrderDate, PaymentMethod) 
-                    VALUES (@UserId, @Status, @TotalAmount, @DeliveryAddress, @OrderDate, @PaymentMethod); 
-                    SELECT SCOPE_IDENTITY();", connection, transaction);
-
-                orderCommand.Parameters.AddWithValue("@UserId", request.UserId);
-                orderCommand.Parameters.AddWithValue("@Status", "Pending");
-                orderCommand.Parameters.AddWithValue("@TotalAmount", totalAmount);
-                orderCommand.Parameters.AddWithValue("@DeliveryAddress", request.DeliveryAddress);
-                orderCommand.Parameters.AddWithValue("@OrderDate", DateTime.UtcNow);
-                orderCommand.Parameters.AddWithValue("@PaymentMethod", request.PaymentMethod);
-
-                var result = await orderCommand.ExecuteScalarAsync(cancellationToken);
-                var orderId = Convert.ToInt32(result);
-
-                // Step 2: Save OrderItems
-                foreach (var item in request.OrderItems)
-                {
-                    var productPrice = productInfo[item.ProductId].Price;
-                    
-                    var itemCommand = new SqlCommand(@"
-                        INSERT INTO OrderItems (OID, PID, Quantity, UnitPrice) 
-                        VALUES (@OrderId, @ProductId, @Quantity, @UnitPrice)", 
-                        connection, transaction);
-
-                    itemCommand.Parameters.AddWithValue("@OrderId", orderId);
-                    itemCommand.Parameters.AddWithValue("@ProductId", item.ProductId);
-                    itemCommand.Parameters.AddWithValue("@Quantity", item.Quantity);
-                    itemCommand.Parameters.AddWithValue("@UnitPrice", productPrice);
-
-                    await itemCommand.ExecuteNonQueryAsync(cancellationToken);
-                }
-
-                // Step 3: Commit transaction
-                transaction.Commit();
-                return orderId;
-            }
-            catch (Exception ex)
-            {
-                // Step 4: Rollback if anything fails
-                transaction.Rollback();
-                throw new Exception($"Database error: {ex.Message}", ex);
-            }
         }
     }
 }

@@ -2,7 +2,7 @@ namespace MyFoodOrderingAPI.Features.Users.GetUsers
 {
     public class GetUsersResponse
     {
-        public List<UserDto> Users { get; set; } = new();
+        public List<UserDto> Data { get; set; } = new();
         public int TotalCount { get; set; }
         public bool Success { get; set; } = true;
         public string Message { get; set; } = "";

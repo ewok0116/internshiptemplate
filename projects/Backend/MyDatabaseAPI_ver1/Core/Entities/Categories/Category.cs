@@ -2,7 +2,7 @@
 // Core/Entities/Category.cs
 namespace MyFoodOrderingAPI.Core.Entities
 {
-    public class Category
+    public class Categories
     {
         public int Id { get; private set; }
         public string Name { get; private set; }
@@ -11,7 +11,7 @@ namespace MyFoodOrderingAPI.Core.Entities
         public DateTime CreatedAt { get; private set; }
 
         // Constructor for creating new category
-        public Category(string name, string description, string imageUrl = "")
+        public Categories(string name, string description, string imageUrl = "")
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Category name cannot be empty", nameof(name));
@@ -23,7 +23,7 @@ namespace MyFoodOrderingAPI.Core.Entities
         }
 
         // Constructor for loading from database
-        public Category(int id, string name, string description, string imageUrl, DateTime createdAt)
+        public Categories(int id, string name, string description, string imageUrl, DateTime createdAt)
         {
             Id = id;
             Name = name ?? "";
