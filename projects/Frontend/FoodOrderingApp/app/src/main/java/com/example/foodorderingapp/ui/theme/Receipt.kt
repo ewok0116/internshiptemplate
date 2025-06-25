@@ -90,8 +90,8 @@ fun ReceiptDialog(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Amount Received
-                    ReceiptField("Amount Received:", "$${String.format("%.2f", total)}")
+                    // Amount Received - FIXED TO USE ₺
+                    ReceiptField("Amount Received:", "₺${String.format("%.2f", total)}")
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -234,7 +234,7 @@ fun ReceiptDialog(
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                // Order items list
+                // Order items list - FIXED TO USE ₺
                 items(viewModel.cartItems) { cartItem ->
                     Row(
                         modifier = Modifier
@@ -250,7 +250,7 @@ fun ReceiptDialog(
                             modifier = Modifier.weight(1f)
                         )
                         Text(
-                            text = "$${String.format("%.2f", cartItem.subtotal)}",
+                            text = "₺${String.format("%.2f", cartItem.subtotal)}",
                             fontSize = 11.sp,
                             color = Color.Black,
                             fontFamily = FontFamily.Monospace
@@ -271,7 +271,7 @@ fun ReceiptDialog(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // Total
+                    // Total - FIXED TO USE ₺
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -284,7 +284,7 @@ fun ReceiptDialog(
                             fontFamily = FontFamily.Monospace
                         )
                         Text(
-                            text = "$${String.format("%.2f", total)}",
+                            text = "₺${String.format("%.2f", total)}",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.Black,

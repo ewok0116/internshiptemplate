@@ -1,4 +1,4 @@
-// Replace your existing models/Models.kt file with this (FIXED VERSION):
+// models/Models.kt - COMPLETE FIXED VERSION
 package com.example.foodorderingapp.models
 
 import androidx.compose.runtime.*
@@ -7,6 +7,7 @@ import android.util.Log
 import android.widget.Toast
 import kotlinx.coroutines.*
 import com.example.foodorderingapp.network.*
+import retrofit2.Response
 
 // =====================================================
 // DATA MODELS
@@ -57,53 +58,39 @@ enum class LoadingState {
 }
 
 // =====================================================
-// VIEW MODEL - DATABASE ONLY (No Mock Data)
+// VIEW MODEL - COMPLETE VERSION
 // =====================================================
 
 class DemoFoodOrderingViewModel(private val context: Context? = null) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
-    // UI State - Start with empty lists (will be loaded from database)
+    // UI State
     var products by mutableStateOf<List<Product>>(emptyList())
         private set
-
     var categories by mutableStateOf<List<Category>>(emptyList())
         private set
-
     var cartItems by mutableStateOf<List<CartItem>>(emptyList())
         private set
-
     var showPaymentDialog by mutableStateOf(false)
         private set
-
     var showCartDialog by mutableStateOf(false)
         private set
-
     var paymentState by mutableStateOf(PaymentState.NONE)
         private set
-
     var selectedPaymentMethod by mutableStateOf(PaymentMethod.CREDIT_CARD)
         private set
-
-    // API connection state
     var isConnectedToDatabase by mutableStateOf(false)
         private set
-
     var loadingState by mutableStateOf(LoadingState.IDLE)
         private set
-
     var errorMessage by mutableStateOf<String?>(null)
         private set
-
     var currentUserId by mutableStateOf(1)
         private set
 
     // Computed properties
-    val cartTotal: Double
-        get() = cartItems.sumOf { it.subtotal }
-
-    val cartItemCount: Int
-        get() = cartItems.sumOf { it.quantity }
+    val cartTotal: Double get() = cartItems.sumOf { it.subtotal }
+    val cartItemCount: Int get() = cartItems.sumOf { it.quantity }
 
     // =====================================================
     // API CONNECTION METHODS
@@ -120,157 +107,221 @@ class DemoFoodOrderingViewModel(private val context: Context? = null) {
         scope.launch {
             try {
                 loadingState = LoadingState.LOADING
-                isConnectedToDatabase = false // Reset state
+                isConnectedToDatabase = false
                 showToast("🔄 Connecting to database...")
 
-                Log.d("ViewModel", "=== CONNECTION ATTEMPT START ===")
-                Log.d("ViewModel", "API URL: ${ApiClient.getCurrentBaseUrl()}")
-                Log.d("ViewModel", "Current isConnectedToDatabase: $isConnectedToDatabase")
-
-                // Test connection first
                 val apiService = ApiClient.getApiService()
-                Log.d("ViewModel", "API Service created successfully")
 
-                val connectionResult = apiService.testConnection()
-                Log.d("ViewModel", "Connection test SUCCESS: ${connectionResult.message}")
+                // Test connection
+                val connectionResponse = apiService.testConnection()
+                if (!connectionResponse.isSuccessful) {
+                    handleConnectionError(Exception("Connection failed"), "Connection test failed")
+                    return@launch
+                }
 
-                // ÖNEMLİ: Connection başarılı olduğunda state'i güncelle
                 isConnectedToDatabase = true
-                Log.d("ViewModel", "isConnectedToDatabase updated to: $isConnectedToDatabase")
+                showToast("✅ Connection successful")
 
-                showToast("✅ Connected: ${connectionResult.message}")
+                // Load all data in parallel
+                val productsDeferred = async { loadProducts(apiService) }
+                val categoriesDeferred = async { loadCategories(apiService) }
+                val usersDeferred = async { loadCurrentUser(apiService) }
 
-                // Load products from API
-                Log.d("ViewModel", "Loading products...")
-                val apiProducts = apiService.getProducts()
-                Log.d("ViewModel", "Received ${apiProducts.size} products from API")
+                // Wait for all requests to complete
+                val productsSuccess = productsDeferred.await()
+                val categoriesSuccess = categoriesDeferred.await()
+                usersDeferred.await()
 
-                products = apiProducts.map { apiProduct ->
-                    Product(
-                        pid = apiProduct.id,
-                        pname = apiProduct.name,
-                        price = apiProduct.price,
-                        description = apiProduct.description,
-                        imageUrl = getEmojiForProduct(apiProduct.name)
-                    )
-                }
-                Log.d("ViewModel", "Products mapped successfully: ${products.size}")
-
-                // Load categories from API
-                Log.d("ViewModel", "Loading categories...")
-                val apiCategories = apiService.getCategories()
-                Log.d("ViewModel", "Received ${apiCategories.size} categories from API")
-
-                categories = apiCategories.map { apiCategory ->
-                    Category(
-                        cid = apiCategory.id,
-                        cname = apiCategory.name,
-                        description = apiCategory.description
-                    )
-                }
-                Log.d("ViewModel", "Categories mapped successfully: ${categories.size}")
-
-                // Load users (to get current user ID)
-                try {
-                    Log.d("ViewModel", "Loading users...")
-                    val apiUsers = apiService.getUsers()
-                    if (apiUsers.isNotEmpty()) {
-                        currentUserId = apiUsers.first().id
-                        Log.d("ViewModel", "Using user ID: $currentUserId")
-                    }
-                } catch (e: Exception) {
-                    Log.w("ViewModel", "Could not load users: ${e.message}")
-                    // Users yüklenemezse default user ID kullan
-                    currentUserId = 1
-                    Log.d("ViewModel", "Using default user ID: $currentUserId")
-                }
-
-                // Final state update
-                if (products.isNotEmpty()) {
+                if (productsSuccess && categoriesSuccess) {
                     loadingState = LoadingState.SUCCESS
-                    Log.d("ViewModel", "LoadingState set to SUCCESS")
-                    showToast("📦 Loaded ${products.size} products from database")
-                    Log.i("ViewModel", "=== CONNECTION SUCCESSFUL: ${products.size} products, ${categories.size} categories ===")
+                    showToast("📦 Data loaded successfully")
                 } else {
                     loadingState = LoadingState.ERROR
-                    errorMessage = "No products found in database"
-                    showToast("⚠️ No products found in database")
-                    Log.w("ViewModel", "No products found in database")
+                    errorMessage = "Failed to load all data"
                 }
-
-            } catch (e: java.net.ConnectException) {
-                handleConnectionError(e, "Cannot connect to server. Check if backend is running and URL is correct.")
-            } catch (e: java.net.UnknownHostException) {
-                handleConnectionError(e, "Unknown host. Check your server URL.")
-            } catch (e: java.net.SocketTimeoutException) {
-                handleConnectionError(e, "Connection timeout. Server may be slow or unreachable.")
-            } catch (e: retrofit2.HttpException) {
-                handleConnectionError(e, "HTTP Error ${e.code()}: ${e.message()}")
             } catch (e: Exception) {
-                handleConnectionError(e, "Unexpected error: ${e.javaClass.simpleName}")
+                handleConnectionError(e, when (e) {
+                    is java.net.ConnectException -> "Cannot connect to server"
+                    is java.net.UnknownHostException -> "Invalid server URL"
+                    is java.net.SocketTimeoutException -> "Connection timeout"
+                    is retrofit2.HttpException -> "HTTP Error ${e.code()}"
+                    else -> "Connection error"
+                })
             }
         }
     }
+// Replace the loading methods in your Models.kt with these versions for wrapper responses
 
-    // handleConnectionError methodunu da güncelleyin:
+    private suspend fun loadProducts(apiService: FoodOrderingApiService): Boolean {
+        return try {
+            Log.d("ViewModel", "Starting to load products...")
+            val response = apiService.getProducts()
+
+            Log.d("ViewModel", "Products response code: ${response.code()}")
+            Log.d("ViewModel", "Products response successful: ${response.isSuccessful}")
+
+            if (response.isSuccessful) {
+                response.body()?.let { apiResponse ->
+                    Log.d("ViewModel", "Products response body: $apiResponse")
+
+                    // Check if the wrapper response is successful
+                    if (apiResponse.success) {
+                        apiResponse.data?.let { apiProducts ->
+                            Log.d("ViewModel", "Found ${apiProducts.size} products in wrapper response")
+
+                            if (apiProducts.isNotEmpty()) {
+                                products = apiProducts.map { apiProduct ->
+                                    Product(
+                                        pid = apiProduct.id,
+                                        pname = apiProduct.name,
+                                        price = apiProduct.price,
+                                        description = apiProduct.description,
+                                        cid = apiProduct.categoryId ?: 0,
+                                        imageUrl = getEmojiForProduct(apiProduct.name)
+                                    )
+                                }
+                                Log.d("ViewModel", "Successfully mapped ${products.size} products")
+                                true
+                            } else {
+                                Log.w("ViewModel", "Products array is empty")
+                                errorMessage = "No products found in database"
+                                false
+                            }
+                        } ?: run {
+                            Log.e("ViewModel", "Products data is null in wrapper")
+                            errorMessage = "No products data in response"
+                            false
+                        }
+                    } else {
+                        Log.e("ViewModel", "API returned success=false: ${apiResponse.message}")
+                        errorMessage = apiResponse.message ?: "Failed to load products"
+                        false
+                    }
+                } ?: run {
+                    Log.e("ViewModel", "Products response body is null")
+                    errorMessage = "Empty response from server"
+                    false
+                }
+            } else {
+                val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                Log.e("ViewModel", "Products HTTP error ${response.code()}: $errorBody")
+                errorMessage = "HTTP ${response.code()}: ${response.message()}"
+                false
+            }
+        } catch (e: Exception) {
+            Log.e("ViewModel", "Products loading exception", e)
+            errorMessage = "Products error: ${e.message}"
+            false
+        }
+    }
+
+    private suspend fun loadCategories(apiService: FoodOrderingApiService): Boolean {
+        return try {
+            Log.d("ViewModel", "Starting to load categories...")
+            val response = apiService.getCategories()
+
+            Log.d("ViewModel", "Categories response code: ${response.code()}")
+            Log.d("ViewModel", "Categories response successful: ${response.isSuccessful}")
+
+            if (response.isSuccessful) {
+                response.body()?.let { apiResponse ->
+                    Log.d("ViewModel", "Categories response body: $apiResponse")
+
+                    // Check if the wrapper response is successful
+                    if (apiResponse.success) {
+                        apiResponse.data?.let { apiCategories ->
+                            Log.d("ViewModel", "Found ${apiCategories.size} categories in wrapper response")
+
+                            categories = apiCategories.map { apiCategory ->
+                                Category(
+                                    cid = apiCategory.id,
+                                    cname = apiCategory.name,
+                                    description = apiCategory.description
+                                )
+                            }
+                            Log.d("ViewModel", "Successfully mapped ${categories.size} categories")
+                            true
+                        } ?: run {
+                            Log.w("ViewModel", "Categories data is null in wrapper")
+                            // Even if no categories, still return true (categories are optional)
+                            categories = emptyList()
+                            true
+                        }
+                    } else {
+                        Log.e("ViewModel", "API returned success=false for categories: ${apiResponse.message}")
+                        errorMessage = apiResponse.message ?: "Failed to load categories"
+                        // Categories are optional, so we can still continue
+                        categories = emptyList()
+                        true
+                    }
+                } ?: run {
+                    Log.e("ViewModel", "Categories response body is null")
+                    errorMessage = "Empty categories response from server"
+                    false
+                }
+            } else {
+                val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                Log.e("ViewModel", "Categories HTTP error ${response.code()}: $errorBody")
+                errorMessage = "HTTP ${response.code()}: ${response.message()}"
+                false
+            }
+        } catch (e: Exception) {
+            Log.e("ViewModel", "Categories loading exception", e)
+            errorMessage = "Categories error: ${e.message}"
+            false
+        }
+    }
+
+    private suspend fun loadCurrentUser(apiService: FoodOrderingApiService) {
+        try {
+            Log.d("ViewModel", "Starting to load users...")
+            val response = apiService.getUsers()
+
+            if (response.isSuccessful) {
+                response.body()?.let { apiResponse ->
+                    Log.d("ViewModel", "Users response body: $apiResponse")
+
+                    if (apiResponse.success) {
+                        apiResponse.data?.let { apiUsers ->
+                            Log.d("ViewModel", "Found ${apiUsers.size} users in wrapper response")
+
+                            if (apiUsers.isNotEmpty()) {
+                                val user = apiUsers.first()
+                                currentUserId = user.id
+                                Log.d("ViewModel", "Set current user ID to: $currentUserId")
+                            } else {
+                                Log.w("ViewModel", "No users found in data, using default ID")
+                                currentUserId = 1
+                            }
+                        } ?: run {
+                            Log.w("ViewModel", "Users data is null in wrapper, using default ID")
+                            currentUserId = 1
+                        }
+                    } else {
+                        Log.w("ViewModel", "API returned success=false for users: ${apiResponse.message}, using default ID")
+                        currentUserId = 1
+                    }
+                } ?: run {
+                    Log.w("ViewModel", "Users response body is null, using default ID")
+                    currentUserId = 1
+                }
+            } else {
+                Log.w("ViewModel", "Users HTTP error ${response.code()}: ${response.message()}, using default ID")
+                currentUserId = 1
+            }
+        } catch (e: Exception) {
+            Log.w("ViewModel", "User loading failed, using default ID: ${e.message}")
+            currentUserId = 1
+        }
+    }
+
     private fun handleConnectionError(e: Exception, userMessage: String) {
         isConnectedToDatabase = false
         loadingState = LoadingState.ERROR
-        errorMessage = "$userMessage\n\nTechnical details: ${e.message}"
-
-        // Detailed logging
-        Log.e("ViewModel", "=== CONNECTION ERROR DETAILS ===")
-        Log.e("ViewModel", "Error Type: ${e.javaClass.simpleName}")
-        Log.e("ViewModel", "Error Message: ${e.message}")
-        Log.e("ViewModel", "API URL: ${ApiClient.getCurrentBaseUrl()}")
-        Log.e("ViewModel", "User Message: $userMessage")
-        Log.e("ViewModel", "isConnectedToDatabase set to: $isConnectedToDatabase")
-        Log.e("ViewModel", "LoadingState set to: $loadingState")
-        Log.e("ViewModel", "===============================")
-
+        errorMessage = "$userMessage\n${e.message}"
         showToast("❌ $userMessage")
-
-        // Keep lists empty
         products = emptyList()
         categories = emptyList()
-    }
-
-    // Debug için yeni method ekleyin:
-    fun debugConnectionState() {
-        Log.d("ViewModel", "=== CURRENT STATE DEBUG ===")
-        Log.d("ViewModel", "isConnectedToDatabase: $isConnectedToDatabase")
-        Log.d("ViewModel", "loadingState: $loadingState")
-        Log.d("ViewModel", "products.size: ${products.size}")
-        Log.d("ViewModel", "categories.size: ${categories.size}")
-        Log.d("ViewModel", "errorMessage: $errorMessage")
-        Log.d("ViewModel", "API initialized: ${ApiClient.isInitialized()}")
-        Log.d("ViewModel", "API URL: ${ApiClient.getCurrentBaseUrl()}")
-        Log.d("ViewModel", "========================")
-    }
-
-    private fun getEmojiForProduct(productName: String): String {
-        return when {
-            productName.contains("burger", ignoreCase = true) ||
-                    productName.contains("big king", ignoreCase = true) ||
-                    productName.contains("classic", ignoreCase = true) -> "🍔"
-
-            productName.contains("cola", ignoreCase = true) ||
-                    productName.contains("coke", ignoreCase = true) ||
-                    productName.contains("pepsi", ignoreCase = true) -> "🥤"
-
-            productName.contains("juice", ignoreCase = true) ||
-                    productName.contains("orange", ignoreCase = true) -> "🧃"
-
-            productName.contains("water", ignoreCase = true) -> "💧"
-            productName.contains("coffee", ignoreCase = true) -> "☕"
-            productName.contains("fries", ignoreCase = true) -> "🍟"
-            productName.contains("onion", ignoreCase = true) -> "🧅"
-            productName.contains("nuggets", ignoreCase = true) ||
-                    productName.contains("chicken", ignoreCase = true) -> "🍗"
-            productName.contains("cheese", ignoreCase = true) -> "🧀"
-
-            else -> "🍽️"
-        }
     }
 
     // =====================================================
@@ -312,34 +363,19 @@ class DemoFoodOrderingViewModel(private val context: Context? = null) {
     }
 
     // =====================================================
-    // PAYMENT METHODS - UPDATED
+    // PAYMENT METHODS
     // =====================================================
 
     fun showPayment() {
-        // Debug state
-        debugConnectionState()
-
-        // Daha esnek connection kontrolü
         if (loadingState != LoadingState.SUCCESS) {
-            Log.w("ViewModel", "Payment blocked - LoadingState: $loadingState")
             showToast("⚠️ Please wait for data to load completely")
             return
         }
 
-        if (products.isEmpty()) {
-            Log.w("ViewModel", "Payment blocked - No products loaded")
-            showToast("⚠️ No products loaded. Please refresh and try again.")
-            return
-        }
-
         if (cartItems.isEmpty()) {
-            Log.w("ViewModel", "Payment blocked - Cart is empty")
             showToast("🛒 Your cart is empty")
             return
         }
-
-        Log.d("ViewModel", "Payment allowed - All checks passed")
-        Log.d("ViewModel", "Cart items: ${cartItems.size}, Total: $cartTotal")
 
         showPaymentDialog = true
         paymentState = PaymentState.SELECTING
@@ -350,13 +386,10 @@ class DemoFoodOrderingViewModel(private val context: Context? = null) {
         paymentState = PaymentState.NONE
     }
 
-    fun processPayment(method: PaymentMethod) {
-        // Debug state
-        debugConnectionState()
+    // Replace the processPayment method in your Models.kt with this enhanced version
 
-        // Daha esnek connection kontrolü
+    fun processPayment(method: PaymentMethod) {
         if (loadingState != LoadingState.SUCCESS || products.isEmpty()) {
-            Log.e("ViewModel", "Payment processing blocked - Data not loaded properly")
             showToast("❌ Cannot process payment: Data not loaded properly")
             paymentState = PaymentState.FAILED
             return
@@ -365,84 +398,116 @@ class DemoFoodOrderingViewModel(private val context: Context? = null) {
         selectedPaymentMethod = method
         paymentState = PaymentState.PROCESSING
 
-        Log.d("ViewModel", "Starting payment processing with method: ${method.displayName}")
-        Log.d("ViewModel", "Cart items: ${cartItems.size}, Total: $cartTotal")
-
         scope.launch {
             try {
+                Log.d("ViewModel", "🔄 Starting payment processing with method: ${method.displayName}")
                 delay(2000) // Simulate processing time
 
-                // Create order items - Backend'inizin beklediği format
+                // STEP 1: Create order request
                 val orderItems = cartItems.map { cartItem ->
                     CreateOrderItemRequest(
                         productId = cartItem.product.pid,
                         quantity = cartItem.quantity
-                        // unitPrice ve totalPrice backend'de hesaplanıyor
                     )
                 }
 
                 val orderRequest = CreateOrderRequest(
                     userId = currentUserId,
-                    deliveryAddress = "Default Delivery Address", // Configurable yapabilirsiniz
+                    deliveryAddress = "Default Delivery Address",
                     paymentMethod = method.apiValue,
                     orderItems = orderItems
                 )
 
-                Log.d("ViewModel", "Sending order request:")
-                Log.d("ViewModel", "- User ID: $currentUserId")
-                Log.d("ViewModel", "- Payment Method: ${method.apiValue}")
-                Log.d("ViewModel", "- Delivery Address: Default Delivery Address")
-                Log.d("ViewModel", "- Order Items: ${orderItems.size}")
-
-                // Log her item'ı detaylı
-                orderItems.forEachIndexed { index, item ->
-                    Log.d("ViewModel", "  Item $index: Product ${item.productId}, Qty ${item.quantity}")
-                }
+                Log.d("ViewModel", "📝 Order request: $orderRequest")
 
                 val apiService = ApiClient.getApiService()
-                Log.d("ViewModel", "Calling API endpoint: POST api/orders")
+                val createOrderResponse = apiService.createOrder(orderRequest)
 
-                val response = apiService.createOrder(orderRequest)
+                Log.d("ViewModel", "📋 Order response code: ${createOrderResponse.code()}")
+                Log.d("ViewModel", "📋 Order response successful: ${createOrderResponse.isSuccessful}")
 
-                Log.d("ViewModel", "API Response received:")
-                Log.d("ViewModel", "- Success: ${response.success}")
-                Log.d("ViewModel", "- Order ID: ${response.orderId}")
-                Log.d("ViewModel", "- Message: ${response.message}")
-                Log.d("ViewModel", "- Total Amount: ${response.totalAmount}")
-                Log.d("ViewModel", "- Order Status: ${response.orderStatus}")
+                if (createOrderResponse.isSuccessful) {
+                    createOrderResponse.body()?.let { response ->
+                        Log.d("ViewModel", "📋 Order response body: $response")
 
-                if (response.success) {
-                    paymentState = PaymentState.SUCCESS
-                    showToast("🎉 Order created! Order ID: ${response.orderId}")
-                    Log.i("ViewModel", "Order created successfully: ${response.message}, ID: ${response.orderId}")
+                        if (response.success) {
+                            // STEP 2: Update order status to "Confirmed" after successful payment
+                            Log.d("ViewModel", "💳 Payment successful! Updating order status to Confirmed...")
+
+                            val statusUpdateSuccess = updateOrderStatusToConfirmed(response.orderId)
+
+                            if (statusUpdateSuccess) {
+                                paymentState = PaymentState.SUCCESS
+                                showToast("🎉 Payment successful! Order #${response.orderId} confirmed")
+                                Log.i("ViewModel", "✅ Order ${response.orderId} created and confirmed successfully")
+                            } else {
+                                // Payment succeeded but status update failed - still show success
+                                paymentState = PaymentState.SUCCESS
+                                showToast("🎉 Payment successful! Order #${response.orderId} (status update pending)")
+                                Log.w("ViewModel", "⚠️ Payment succeeded but status update failed for order ${response.orderId}")
+                            }
+                        } else {
+                            paymentState = PaymentState.FAILED
+                            errorMessage = response.message
+                            showToast("❌ Order failed: ${response.message}")
+                            Log.e("ViewModel", "❌ Order creation failed: ${response.message}")
+                        }
+                    } ?: run {
+                        paymentState = PaymentState.FAILED
+                        errorMessage = "Empty response from server"
+                        showToast("❌ Payment failed: Empty response")
+                        Log.e("ViewModel", "❌ Order response body is null")
+                    }
                 } else {
+                    val errorBody = createOrderResponse.errorBody()?.string()
                     paymentState = PaymentState.FAILED
-                    errorMessage = "Order creation failed: ${response.message}"
-                    showToast("❌ Order failed: ${response.message}")
-                    Log.e("ViewModel", "Order creation failed: ${response.message}")
+                    errorMessage = "HTTP ${createOrderResponse.code()}: ${createOrderResponse.message()}"
+                    showToast("❌ Payment failed: HTTP ${createOrderResponse.code()}")
+                    Log.e("ViewModel", "❌ Order HTTP error ${createOrderResponse.code()}: $errorBody")
                 }
-
-            } catch (e: retrofit2.HttpException) {
-                paymentState = PaymentState.FAILED
-                val errorBody = e.response()?.errorBody()?.string()
-                Log.e("ViewModel", "HTTP Error ${e.code()}: $errorBody")
-
-                errorMessage = when (e.code()) {
-                    400 -> "Bad request: Please check your order details"
-                    404 -> "API endpoint not found: ${e.response()?.raw()?.request?.url}"
-                    500 -> "Server error: Please try again later"
-                    else -> "HTTP Error ${e.code()}: ${e.message()}"
-                }
-
-                showToast("❌ Payment failed: $errorMessage")
-                Log.e("ViewModel", "HTTP Error details:", e)
-
             } catch (e: Exception) {
                 paymentState = PaymentState.FAILED
                 errorMessage = "Payment failed: ${e.message}"
                 showToast("❌ Payment processing failed: ${e.message}")
-                Log.e("ViewModel", "Payment processing failed", e)
+                Log.e("ViewModel", "❌ Payment processing exception", e)
             }
+        }
+    }
+
+    // Add this new method to your ViewModel
+    private suspend fun updateOrderStatusToConfirmed(orderId: Int): Boolean {
+        return try {
+            Log.d("ViewModel", "🔄 Updating order $orderId status to Confirmed...")
+
+            val apiService = ApiClient.getApiService()
+            val statusRequest = StatusUpdateRequest(newStatus = "Confirmed")
+            val response = apiService.updateOrderStatus(orderId, statusRequest)
+
+            Log.d("ViewModel", "📊 Status update response code: ${response.code()}")
+
+            if (response.isSuccessful) {
+                response.body()?.let { statusResponse ->
+                    Log.d("ViewModel", "📊 Status update response: $statusResponse")
+
+                    if (statusResponse.success) {
+                        Log.i("ViewModel", "✅ Order $orderId status updated to Confirmed successfully")
+                        true
+                    } else {
+                        Log.e("ViewModel", "❌ Status update failed: ${statusResponse.message}")
+                        false
+                    }
+                } ?: run {
+                    Log.e("ViewModel", "❌ Status update response body is null")
+                    false
+                }
+            } else {
+                val errorBody = response.errorBody()?.string()
+                Log.e("ViewModel", "❌ Status update HTTP error ${response.code()}: $errorBody")
+                false
+            }
+        } catch (e: Exception) {
+            Log.e("ViewModel", "❌ Status update exception for order $orderId", e)
+            false
         }
     }
 
@@ -509,19 +574,27 @@ class DemoFoodOrderingViewModel(private val context: Context? = null) {
         errorMessage = null
     }
 
-    private fun showToast(message: String) {
-        context?.let {
-            Toast.makeText(it, message, Toast.LENGTH_SHORT).show()
+    private fun getEmojiForProduct(productName: String): String {
+        return when {
+            productName.contains("burger", ignoreCase = true) -> "🍔"
+            productName.contains("cola", ignoreCase = true) -> "🥤"
+            productName.contains("juice", ignoreCase = true) -> "🧃"
+            productName.contains("water", ignoreCase = true) -> "💧"
+            productName.contains("coffee", ignoreCase = true) -> "☕"
+            productName.contains("fries", ignoreCase = true) -> "🍟"
+            productName.contains("nuggets", ignoreCase = true) -> "🍗"
+            productName.contains("cheese", ignoreCase = true) -> "🧀"
+            else -> "🍽️"
         }
+    }
+
+    private fun showToast(message: String) {
+        context?.let { Toast.makeText(it, message, Toast.LENGTH_SHORT).show() }
     }
 
     fun onCleared() {
         scope.cancel()
     }
 }
-
-// =====================================================
-// ALIAS FOR COMPATIBILITY
-// =====================================================
 
 typealias FoodOrderingViewModel = DemoFoodOrderingViewModel

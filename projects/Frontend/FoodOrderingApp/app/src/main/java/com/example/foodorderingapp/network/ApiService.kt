@@ -1,6 +1,8 @@
-// network/ApiService.kt - COMPLETE VERSION
+// network/ApiService.kt - FIXED with correct endpoint
 package com.example.foodorderingapp.network
-
+// Add this import at the top of your Models.kt file
+import com.example.foodorderingapp.network.StatusUpdateRequest
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
@@ -14,6 +16,13 @@ import java.util.concurrent.TimeUnit
 // =====================================================
 // API DATA MODELS
 // =====================================================
+
+// Wrapper for API responses
+data class ApiResponse<T>(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("message") val message: String?,
+    @SerializedName("data") val data: T?
+)
 
 data class ApiProduct(
     @SerializedName("id") val id: Int,
@@ -36,7 +45,6 @@ data class ApiUser(
     @SerializedName("email") val email: String
 )
 
-// Order creation models - Backend format
 data class CreateOrderRequest(
     @SerializedName("userId") val userId: Int,
     @SerializedName("deliveryAddress") val deliveryAddress: String,
@@ -49,7 +57,6 @@ data class CreateOrderItemRequest(
     @SerializedName("quantity") val quantity: Int
 )
 
-// Backend response
 data class CreateOrderResponse(
     @SerializedName("orderId") val orderId: Int,
     @SerializedName("orderStatus") val orderStatus: String,
@@ -76,31 +83,48 @@ data class ConnectionTestResponse(
     @SerializedName("timestamp") val timestamp: String
 )
 
+data class StatusUpdateRequest(
+    @SerializedName("newStatus") val newStatus: String
+)
+
+data class UpdateOrderStatusResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("message") val message: String,
+    @SerializedName("orderId") val orderId: Int? = null,
+    @SerializedName("newStatus") val newStatus: String? = null
+)
+
 // =====================================================
-// RETROFIT API INTERFACE
+// RETROFIT API INTERFACE - FIXED ENDPOINT
 // =====================================================
 
 interface FoodOrderingApiService {
-
     @GET("api/Database/test-connection")
-    suspend fun testConnection(): ConnectionTestResponse
+    suspend fun testConnection(): Response<ConnectionTestResponse>
 
-    @GET("api/Database/products")
-    suspend fun getProducts(): List<ApiProduct>
+    // Wrapper responses with success/data structure
+    @GET("api/products")
+    suspend fun getProducts(): Response<ApiResponse<List<ApiProduct>>>
 
-    @GET("api/Database/categories")
-    suspend fun getCategories(): List<ApiCategory>
+    @GET("api/categories")
+    suspend fun getCategories(): Response<ApiResponse<List<ApiCategory>>>
 
-    @GET("api/Database/users")
-    suspend fun getUsers(): List<ApiUser>
+    @GET("api/users")
+    suspend fun getUsers(): Response<ApiResponse<List<ApiUser>>>
 
-    // FIXED ENDPOINT - Backend'inizle aynı
-    @POST("api/orders")
+    // FIXED: Correct order endpoint
+    @POST("api/create-order")
     @Headers("Content-Type: application/json")
-    suspend fun createOrder(@Body request: CreateOrderRequest): CreateOrderResponse
+    suspend fun createOrder(@Body request: CreateOrderRequest): Response<CreateOrderResponse>
 
     @GET("api/orders")
-    suspend fun getOrders(@Query("userId") userId: Int? = null): List<CreateOrderResponse>
+    suspend fun getOrders(@Query("userId") userId: Int? = null): Response<List<CreateOrderResponse>>
+
+    @PUT("api/orders/{orderId}/status")
+    suspend fun updateOrderStatus(
+        @Path("orderId") orderId: Int,
+        @Body request: StatusUpdateRequest
+    ): Response<UpdateOrderStatusResponse>
 }
 
 // =====================================================

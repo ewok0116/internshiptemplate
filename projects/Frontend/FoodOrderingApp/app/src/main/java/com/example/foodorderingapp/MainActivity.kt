@@ -18,9 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.foodorderingapp.models.DemoFoodOrderingViewModel
-import com.example.foodorderingapp.models.PaymentState
-import com.example.foodorderingapp.models.LoadingState
+import com.example.foodorderingapp.models.*
 import com.example.foodorderingapp.ui.theme.*
 import kotlinx.coroutines.delay
 
