@@ -59,7 +59,7 @@ namespace MyFoodOrderingAPI.Features.Products.GetProducts
 
                 return new GetProductsResponse
                 {
-                    Products = productDtos,
+                    Data = productDtos,
                     TotalCount = totalCount, // 🎯 Now using actual count from database
                     Success = true,
                     Message = "Products retrieved successfully"

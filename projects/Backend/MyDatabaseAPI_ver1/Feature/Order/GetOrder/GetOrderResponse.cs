@@ -1,3 +1,4 @@
+
 // Features/Orders/GetOrders/GetOrdersResponse.cs
 namespace MyFoodOrderingAPI.Features.Orders.GetOrders
 {
@@ -5,14 +6,17 @@ namespace MyFoodOrderingAPI.Features.Orders.GetOrders
     {
         public List<OrderSummaryDto> Orders { get; set; } = new();
         public int TotalCount { get; set; }
-        public bool Success { get; set; } = true;
+        public int PageNumber { get; set; }
+        public int PageSize { get; set; }
+        public int TotalPages { get; set; }
+        public bool Success { get; set; }
         public string Message { get; set; } = "";
     }
 
     public class GetOrderByIdResponse
     {
         public OrderDetailDto? Order { get; set; }
-        public bool Success { get; set; } = true;
+        public bool Success { get; set; }
         public string Message { get; set; } = "";
     }
 

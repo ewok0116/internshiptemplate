@@ -4,7 +4,7 @@ namespace MyFoodOrderingAPI.Features.Products.GetProducts
 {
     public class GetProductsResponse
     {
-        public List<ProductDto> Products { get; set; } = new();
+        public List<ProductDto> Data { get; set; } = new();
         public int TotalCount { get; set; }
         public bool Success { get; set; } = true;
         public string Message { get; set; } = "";
