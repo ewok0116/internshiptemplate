@@ -1,4 +1,4 @@
-# Day 11 – Finished DB-AndroidStudio Connection
+# Day 11 – Building Clean Architecture with Dependency Inversion and Injection
 
 ## ✅ Objectives
 - [x] Dependency Injection and Inversion for User part
