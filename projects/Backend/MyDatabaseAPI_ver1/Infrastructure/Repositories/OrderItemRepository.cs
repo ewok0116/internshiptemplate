@@ -109,58 +109,65 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
             var filter = new OrderItemFilter { ProductId = productId };
             return await GetOrderItemsAsync(filter, cancellationToken);
         }
-// Update your OrderItemRepository.AddOrderItemAsync method
 
-public async Task<OrderItem> AddOrderItemAsync(OrderItem orderItem, CancellationToken cancellationToken = default)
-{
-    using var connection = new SqlConnection(_connectionString);
-    await connection.OpenAsync(cancellationToken);
-    
-    // ✅ FIXED: Remove TotalPrice from INSERT since it's a computed column
-    var sql = @"INSERT INTO OrderItems (OID, PID, Quantity, UnitPrice) 
-               OUTPUT INSERTED.OrderItemID, INSERTED.OID, INSERTED.PID, INSERTED.Quantity, INSERTED.UnitPrice, INSERTED.TotalPrice
-               VALUES (@OrderId, @ProductId, @Quantity, @UnitPrice)";
-    
-    using var command = new SqlCommand(sql, connection);
-    
-    command.Parameters.AddWithValue("@OrderId", orderItem.OrderId);
-    command.Parameters.AddWithValue("@ProductId", orderItem.ProductId);
-    command.Parameters.AddWithValue("@Quantity", orderItem.Quantity);
-    command.Parameters.AddWithValue("@UnitPrice", orderItem.UnitPrice);
-    // ❌ REMOVED: @TotalPrice parameter since it's computed
-
-    using var reader = await command.ExecuteReaderAsync(cancellationToken);
-    if (await reader.ReadAsync(cancellationToken))
-    {
-        return new OrderItem(
-            id: Convert.ToInt32(reader["OrderItemID"]),
-            orderId: Convert.ToInt32(reader["OID"]),
-            productId: Convert.ToInt32(reader["PID"]),
-            quantity: Convert.ToInt32(reader["Quantity"]),
-            unitPrice: Convert.ToDecimal(reader["UnitPrice"]),
-            totalPrice: Convert.ToDecimal(reader["TotalPrice"]) // ✅ Read the computed value
-        );
-    }
-    
-    throw new InvalidOperationException("Failed to insert order item");
-}        public async Task<OrderItem> UpdateOrderItemAsync(OrderItem orderItem, CancellationToken cancellationToken = default)
+        // ✅ FIXED: ANSI-compliant AddOrderItemAsync
+        public async Task<OrderItem> AddOrderItemAsync(OrderItem orderItem, CancellationToken cancellationToken = default)
         {
             using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync(cancellationToken);
             
-            // ✅ FIXED: Changed from "OiID" to "OrderItemID"
+            // ⭐ CHANGE: Include TotalPrice in INSERT (triggers will recalculate)
+            var sql = @"INSERT INTO OrderItems (OID, PID, Quantity, UnitPrice, TotalPrice) 
+                       VALUES (@OrderId, @ProductId, @Quantity, @UnitPrice, @TotalPrice);
+                       SELECT OrderItemID, OID, PID, Quantity, UnitPrice, TotalPrice 
+                       FROM OrderItems WHERE OrderItemID = SCOPE_IDENTITY();";
+            
+            using var command = new SqlCommand(sql, connection);
+            
+            command.Parameters.AddWithValue("@OrderId", orderItem.OrderId);
+            command.Parameters.AddWithValue("@ProductId", orderItem.ProductId);
+            command.Parameters.AddWithValue("@Quantity", orderItem.Quantity);
+            command.Parameters.AddWithValue("@UnitPrice", orderItem.UnitPrice);
+            // ⭐ CHANGE: Calculate TotalPrice (trigger will recalculate anyway)
+            command.Parameters.AddWithValue("@TotalPrice", orderItem.Quantity * orderItem.UnitPrice);
+
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (await reader.ReadAsync(cancellationToken))
+            {
+                return new OrderItem(
+                    id: Convert.ToInt32(reader["OrderItemID"]),
+                    orderId: Convert.ToInt32(reader["OID"]),
+                    productId: Convert.ToInt32(reader["PID"]),
+                    quantity: Convert.ToInt32(reader["Quantity"]),
+                    unitPrice: Convert.ToDecimal(reader["UnitPrice"]),
+                    totalPrice: Convert.ToDecimal(reader["TotalPrice"]) // ✅ Read trigger-calculated value
+                );
+            }
+            
+            throw new InvalidOperationException("Failed to insert order item");
+        }
+
+        // ✅ FIXED: ANSI-compliant UpdateOrderItemAsync  
+        public async Task<OrderItem> UpdateOrderItemAsync(OrderItem orderItem, CancellationToken cancellationToken = default)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync(cancellationToken);
+            
+            // ⭐ CHANGE: Only update Quantity and UnitPrice, let triggers calculate TotalPrice
             var sql = @"UPDATE OrderItems 
-                       SET Quantity = @Quantity, UnitPrice = @UnitPrice, TotalPrice = @TotalPrice 
+                       SET Quantity = @Quantity, UnitPrice = @UnitPrice 
                        WHERE OrderItemID = @Id";
             using var command = new SqlCommand(sql, connection);
             
             command.Parameters.AddWithValue("@Id", orderItem.Id);
             command.Parameters.AddWithValue("@Quantity", orderItem.Quantity);
             command.Parameters.AddWithValue("@UnitPrice", orderItem.UnitPrice);
-            command.Parameters.AddWithValue("@TotalPrice", orderItem.TotalPrice);
+            // ⭐ REMOVED: @TotalPrice parameter - triggers will handle it
 
             await command.ExecuteNonQueryAsync(cancellationToken);
-            return orderItem;
+            
+            // ⭐ CHANGE: Requery to get trigger-calculated TotalPrice
+            return await GetOrderItemByIdAsync(orderItem.Id, cancellationToken) ?? orderItem;
         }
 
         public async Task<bool> DeleteOrderItemAsync(int id, CancellationToken cancellationToken = default)
@@ -207,12 +214,14 @@ public async Task<OrderItem> AddOrderItemAsync(OrderItem orderItem, Cancellation
             return Convert.ToInt32(result);
         }
 
+        // ✅ FIXED: ANSI-compliant GetOrderTotalAsync
         public async Task<decimal> GetOrderTotalAsync(int orderId, CancellationToken cancellationToken = default)
         {
             using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync(cancellationToken);
             
-            var sql = "SELECT ISNULL(SUM(TotalPrice), 0) FROM OrderItems WHERE OID = @OrderId";
+            // ⭐ CHANGE: Use COALESCE instead of ISNULL (ANSI standard)
+            var sql = "SELECT COALESCE(SUM(TotalPrice), 0) FROM OrderItems WHERE OID = @OrderId";
             using var command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@OrderId", orderId);
 

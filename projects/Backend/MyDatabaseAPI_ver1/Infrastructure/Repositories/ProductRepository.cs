@@ -19,7 +19,7 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
                 throw new InvalidOperationException("Connection string not found in appsettings.json or environment variables.");
             }
         }
-
+ 
         private string GetConnectionString(IConfiguration configuration)
         {
             // Try appsettings.json first
@@ -44,6 +44,7 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
             return null;
         }
 
+        // ✅ FIXED: Updated GetProductsAsync with bool ↔ int conversion
         public async Task<List<Product>> GetProductsAsync(ProductFilter filter, CancellationToken cancellationToken = default)
         {
             var products = new List<Product>();
@@ -68,7 +69,8 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
                     price: Convert.ToDecimal(reader["Price"]),
                     imageUrl: reader["PImageUrl"]?.ToString() ?? "",
                     categoryId: reader["CID"] != DBNull.Value ? Convert.ToInt32(reader["CID"]) : 0,
-                    isAvailable: reader["IsAvailable"] != DBNull.Value ? Convert.ToBoolean(reader["IsAvailable"]) : true,
+                    // ⭐ CHANGE: Convert int (1/0) back to bool for ANSI database
+                    isAvailable: reader["IsAvailable"] != DBNull.Value ? Convert.ToInt32(reader["IsAvailable"]) == 1 : true,
                     createdAt: reader["CreatedAt"] != DBNull.Value ? Convert.ToDateTime(reader["CreatedAt"]) : DateTime.UtcNow
                 );
                 products.Add(product);
@@ -77,6 +79,7 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
             return products;
         }
 
+        // ✅ FIXED: Updated GetProductByIdAsync with bool ↔ int conversion
         public async Task<Product?> GetProductByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             using var connection = new SqlConnection(_connectionString);
@@ -96,12 +99,93 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
                     price: Convert.ToDecimal(reader["Price"]),
                     imageUrl: reader["PImageUrl"]?.ToString() ?? "",
                     categoryId: reader["CID"] != DBNull.Value ? Convert.ToInt32(reader["CID"]) : 0,
-                    isAvailable: reader["IsAvailable"] != DBNull.Value ? Convert.ToBoolean(reader["IsAvailable"]) : true,
+                    // ⭐ CHANGE: Convert int (1/0) back to bool for ANSI database
+                    isAvailable: reader["IsAvailable"] != DBNull.Value ? Convert.ToInt32(reader["IsAvailable"]) == 1 : true,
                     createdAt: reader["CreatedAt"] != DBNull.Value ? Convert.ToDateTime(reader["CreatedAt"]) : DateTime.UtcNow
                 );
             }
 
             return null;
+        }
+
+        // ✅ NEW: Added missing AddProductAsync method
+        public async Task<Product> AddProductAsync(Product product, CancellationToken cancellationToken = default)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync(cancellationToken);
+            
+            // ⭐ ANSI-compliant: Use CURRENT_TIMESTAMP and separate INSERT/SELECT
+            var sql = @"INSERT INTO Products (PName, PDescription, Price, PImageUrl, CID, IsAvailable, CreatedAt) 
+                       VALUES (@Name, @Description, @Price, @ImageUrl, @CategoryId, @IsAvailable, CURRENT_TIMESTAMP);
+                       SELECT PID, PName, PDescription, Price, PImageUrl, CID, IsAvailable, CreatedAt 
+                       FROM Products WHERE PID = SCOPE_IDENTITY();";
+            
+            using var command = new SqlCommand(sql, connection);
+            
+            command.Parameters.AddWithValue("@Name", product.Name);
+            command.Parameters.AddWithValue("@Description", product.Description);
+            command.Parameters.AddWithValue("@Price", product.Price);
+            command.Parameters.AddWithValue("@ImageUrl", product.ImageUrl);
+            command.Parameters.AddWithValue("@CategoryId", product.CategoryId);
+            // ⭐ CHANGE: Convert bool to int (1/0) for ANSI database
+            command.Parameters.AddWithValue("@IsAvailable", product.IsAvailable ? 1 : 0);
+
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (await reader.ReadAsync(cancellationToken))
+            {
+                return new Product(
+                    id: Convert.ToInt32(reader["PID"]),
+                    name: reader["PName"]?.ToString() ?? "",
+                    description: reader["PDescription"]?.ToString() ?? "",
+                    price: Convert.ToDecimal(reader["Price"]),
+                    imageUrl: reader["PImageUrl"]?.ToString() ?? "",
+                    categoryId: reader["CID"] != DBNull.Value ? Convert.ToInt32(reader["CID"]) : 0,
+                    // ⭐ CHANGE: Convert int (1/0) back to bool
+                    isAvailable: reader["IsAvailable"] != DBNull.Value ? Convert.ToInt32(reader["IsAvailable"]) == 1 : true,
+                    createdAt: reader["CreatedAt"] != DBNull.Value ? Convert.ToDateTime(reader["CreatedAt"]) : DateTime.UtcNow
+                );
+            }
+
+            throw new InvalidOperationException("Failed to insert product");
+        }
+
+        // ✅ NEW: Added missing UpdateProductAsync method
+        public async Task<Product> UpdateProductAsync(Product product, CancellationToken cancellationToken = default)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync(cancellationToken);
+            
+            var sql = @"UPDATE Products 
+                       SET PName = @Name, PDescription = @Description, Price = @Price, 
+                           PImageUrl = @ImageUrl, CID = @CategoryId, IsAvailable = @IsAvailable 
+                       WHERE PID = @Id";
+            using var command = new SqlCommand(sql, connection);
+            
+            command.Parameters.AddWithValue("@Id", product.Id);
+            command.Parameters.AddWithValue("@Name", product.Name);
+            command.Parameters.AddWithValue("@Description", product.Description);
+            command.Parameters.AddWithValue("@Price", product.Price);
+            command.Parameters.AddWithValue("@ImageUrl", product.ImageUrl);
+            command.Parameters.AddWithValue("@CategoryId", product.CategoryId);
+            // ⭐ CHANGE: Convert bool to int (1/0) for ANSI database
+            command.Parameters.AddWithValue("@IsAvailable", product.IsAvailable ? 1 : 0);
+
+            await command.ExecuteNonQueryAsync(cancellationToken);
+            return product;
+        }
+
+        // ✅ NEW: Added missing DeleteProductAsync method
+        public async Task<bool> DeleteProductAsync(int id, CancellationToken cancellationToken = default)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync(cancellationToken);
+            
+            var sql = "DELETE FROM Products WHERE PID = @Id";
+            using var command = new SqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@Id", id);
+
+            var rowsAffected = await command.ExecuteNonQueryAsync(cancellationToken);
+            return rowsAffected > 0;
         }
 
         public async Task<int> GetProductsCountAsync(ProductFilter filter, CancellationToken cancellationToken = default)
@@ -127,6 +211,14 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
             return await GetProductsAsync(filter, cancellationToken);
         }
 
+        // ✅ NEW: Added method to get available products only
+        public async Task<List<Product>> GetAvailableProductsAsync(CancellationToken cancellationToken = default)
+        {
+            var filter = new ProductFilter { IsAvailable = true };
+            return await GetProductsAsync(filter, cancellationToken);
+        }
+
+        // ✅ FIXED: Updated BuildGetProductsQuery with bool ↔ int conversion
         private (string Sql, Dictionary<string, object> Parameters) BuildGetProductsQuery(ProductFilter filter)
         {
             var conditions = new List<string>();
@@ -161,7 +253,8 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
             if (filter.IsAvailable.HasValue)
             {
                 conditions.Add("IsAvailable = @IsAvailable");
-                parameters["@IsAvailable"] = filter.IsAvailable.Value;
+                // ⭐ CHANGE: Convert bool to int (1/0) for database parameter
+                parameters["@IsAvailable"] = filter.IsAvailable.Value ? 1 : 0;
             }
 
             if (conditions.Any())
@@ -177,6 +270,7 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
             return (sql, parameters);
         }
 
+        // ✅ FIXED: Updated BuildCountQuery with bool ↔ int conversion
         private (string Sql, Dictionary<string, object> Parameters) BuildCountQuery(ProductFilter filter)
         {
             var conditions = new List<string>();
@@ -211,7 +305,8 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
             if (filter.IsAvailable.HasValue)
             {
                 conditions.Add("IsAvailable = @IsAvailable");
-                parameters["@IsAvailable"] = filter.IsAvailable.Value;
+                // ⭐ CHANGE: Convert bool to int (1/0) for database parameter
+                parameters["@IsAvailable"] = filter.IsAvailable.Value ? 1 : 0;
             }
 
             if (conditions.Any())

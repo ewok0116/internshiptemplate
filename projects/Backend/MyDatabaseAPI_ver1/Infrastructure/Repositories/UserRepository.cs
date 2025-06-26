@@ -116,20 +116,35 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
             return null;
         }
 
+        // ✅ FIXED: ANSI-compliant AddUserAsync
         public async Task<User> AddUserAsync(User user, CancellationToken cancellationToken = default)
         {
             using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync(cancellationToken);
             
-            var sql = "INSERT INTO Users (UName, UEmail, CreatedAt) OUTPUT INSERTED.UID VALUES (@Name, @Email, @CreatedAt)";
+            // ⭐ CHANGE: Use CURRENT_TIMESTAMP and separate INSERT/SELECT
+            var sql = @"INSERT INTO Users (UName, UEmail, CreatedAt) 
+                       VALUES (@Name, @Email, CURRENT_TIMESTAMP);
+                       SELECT UID, UName, UEmail, CreatedAt 
+                       FROM Users WHERE UID = SCOPE_IDENTITY();";
+            
             using var command = new SqlCommand(sql, connection);
             
             command.Parameters.AddWithValue("@Name", user.Name);
             command.Parameters.AddWithValue("@Email", user.Email);
-            command.Parameters.AddWithValue("@CreatedAt", user.CreatedAt);
+            // ⭐ REMOVED: @CreatedAt parameter - now using CURRENT_TIMESTAMP
 
-            var newId = (int)await command.ExecuteScalarAsync(cancellationToken);
-            return new User(newId, user.Name, user.Email);
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (await reader.ReadAsync(cancellationToken))
+            {
+                return new User(
+                    id: Convert.ToInt32(reader["UID"]),
+                    name: reader["UName"]?.ToString() ?? "",
+                    email: reader["UEmail"]?.ToString() ?? ""
+                );
+            }
+
+            throw new InvalidOperationException("Failed to insert user");
         }
 
         public async Task<User> UpdateUserAsync(User user, CancellationToken cancellationToken = default)

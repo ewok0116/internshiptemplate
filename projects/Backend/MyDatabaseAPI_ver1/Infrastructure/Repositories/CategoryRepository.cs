@@ -99,21 +99,38 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
             return null;
         }
 
+        // ✅ FIXED: ANSI-compliant AddCategoryAsync
         public async Task<Categories> AddCategoryAsync(Categories category, CancellationToken cancellationToken = default)
         {
             using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync(cancellationToken);
             
-            var sql = "INSERT INTO Categories (CName, CDescription, ImageUrl, CreatedAt) OUTPUT INSERTED.CID VALUES (@Name, @Description, @ImageUrl, @CreatedAt)";
+            // ⭐ CHANGE: Use CURRENT_TIMESTAMP and separate INSERT/SELECT
+            var sql = @"INSERT INTO Categories (CName, CDescription, ImageUrl, CreatedAt) 
+                       VALUES (@Name, @Description, @ImageUrl, CURRENT_TIMESTAMP);
+                       SELECT CID, CName, CDescription, ImageUrl, CreatedAt 
+                       FROM Categories WHERE CID = SCOPE_IDENTITY();";
+            
             using var command = new SqlCommand(sql, connection);
             
             command.Parameters.AddWithValue("@Name", category.Name);
             command.Parameters.AddWithValue("@Description", category.Description);
             command.Parameters.AddWithValue("@ImageUrl", category.ImageUrl);
-            command.Parameters.AddWithValue("@CreatedAt", category.CreatedAt);
+            // ⭐ REMOVED: @CreatedAt parameter - now using CURRENT_TIMESTAMP
 
-            var newId = (int)await command.ExecuteScalarAsync(cancellationToken);
-            return new Categories(newId, category.Name, category.Description, category.ImageUrl, category.CreatedAt);
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (await reader.ReadAsync(cancellationToken))
+            {
+                return new Categories(
+                    id: Convert.ToInt32(reader["CID"]),
+                    name: reader["CName"]?.ToString() ?? "",
+                    description: reader["CDescription"]?.ToString() ?? "",
+                    imageUrl: reader["ImageUrl"]?.ToString() ?? "",
+                    createdAt: reader["CreatedAt"] != DBNull.Value ? Convert.ToDateTime(reader["CreatedAt"]) : DateTime.UtcNow
+                );
+            }
+
+            throw new InvalidOperationException("Failed to insert category");
         }
 
         public async Task<Categories> UpdateCategoryAsync(Categories category, CancellationToken cancellationToken = default)

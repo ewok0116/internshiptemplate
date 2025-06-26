@@ -24,6 +24,29 @@ data class ApiResponse<T>(
     @SerializedName("data") val data: T?
 )
 
+data class CancelOrderRequest(
+    @SerializedName("orderId") val orderId: Int,
+    @SerializedName("userId") val userId: Int,
+    @SerializedName("reason") val reason: String? = null
+)
+
+// Cancel Reason Request (for alternative endpoint)
+data class CancelReasonRequest(
+    @SerializedName("reason") val reason: String?
+)
+
+// Cancel Order Response
+data class CancelOrderResponse(
+    @SerializedName("orderId") val orderId: Int,
+    @SerializedName("userId") val userId: Int,
+    @SerializedName("reason") val reason: String?,
+    @SerializedName("cancelledAt") val cancelledAt: String,
+    @SerializedName("previousStatus") val previousStatus: String,
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("message") val message: String
+)
+
+
 data class ApiProduct(
     @SerializedName("id") val id: Int,
     @SerializedName("name") val name: String,
@@ -125,6 +148,31 @@ interface FoodOrderingApiService {
         @Path("orderId") orderId: Int,
         @Body request: StatusUpdateRequest
     ): Response<UpdateOrderStatusResponse>
+
+
+    /**
+     * Cancel an order with full request body
+     */
+    @POST("api/cancel-order")
+    @Headers("Content-Type: application/json")
+    suspend fun cancelOrder(@Body request: CancelOrderRequest): Response<CancelOrderResponse>
+
+    /**
+     * Cancel order using path parameters (alternative endpoint)
+     */
+    @POST("api/cancel-order/{orderId}/user/{userId}")
+    @Headers("Content-Type: application/json")
+    suspend fun cancelOrderByIds(
+        @Path("orderId") orderId: Int,
+        @Path("userId") userId: Int,
+        @Body request: CancelReasonRequest? = null
+    ): Response<CancelOrderResponse>
+
+    /**
+     * Health check for cancel order service
+     */
+    @GET("api/cancel-order/health")
+    suspend fun checkCancelOrderHealth(): Response<ConnectionTestResponse>
 }
 
 // =====================================================

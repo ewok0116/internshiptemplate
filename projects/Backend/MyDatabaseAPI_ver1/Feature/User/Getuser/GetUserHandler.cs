@@ -56,7 +56,7 @@ namespace MyFoodOrderingAPI.Features.Users.GetUsers
 
                 return new GetUsersResponse
                 {
-                    Users = userDtos,
+                    Data = userDtos,
                     TotalCount = totalCount,
                     Success = true,
                     Message = "Users retrieved successfully"

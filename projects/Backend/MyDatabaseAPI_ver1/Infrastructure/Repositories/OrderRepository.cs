@@ -139,27 +139,42 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
             return await GetOrdersAsync(filter, cancellationToken);
         }
 
+        // ✅ FIXED: ANSI-compliant AddOrderAsync
         public async Task<Order> AddOrderAsync(Order order, CancellationToken cancellationToken = default)
         {
             using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync(cancellationToken);
             
+            // ⭐ CHANGE: Use CURRENT_TIMESTAMP and separate INSERT/SELECT
             var sql = @"INSERT INTO Orders (UID, OrderStatus, TotalAmount, DeliveryAddress, OrderDate, PaymentMethod) 
-                       OUTPUT INSERTED.OID 
-                       VALUES (@UserId, @OrderStatus, @TotalAmount, @DeliveryAddress, @OrderDate, @PaymentMethod)";
+                       VALUES (@UserId, @OrderStatus, @TotalAmount, @DeliveryAddress, CURRENT_TIMESTAMP, @PaymentMethod);
+                       SELECT OID, UID, OrderStatus, TotalAmount, DeliveryAddress, OrderDate, PaymentMethod 
+                       FROM Orders WHERE OID = SCOPE_IDENTITY();";
+            
             using var command = new SqlCommand(sql, connection);
             
             command.Parameters.AddWithValue("@UserId", order.UserId);
             command.Parameters.AddWithValue("@OrderStatus", order.OrderStatus);
             command.Parameters.AddWithValue("@TotalAmount", order.TotalAmount);
             command.Parameters.AddWithValue("@DeliveryAddress", order.DeliveryAddress);
-            command.Parameters.AddWithValue("@OrderDate", order.OrderDate);
             command.Parameters.AddWithValue("@PaymentMethod", order.PaymentMethod);
+            // ⭐ REMOVED: @OrderDate parameter - now using CURRENT_TIMESTAMP
 
-            var newId = (int)await command.ExecuteScalarAsync(cancellationToken);
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (await reader.ReadAsync(cancellationToken))
+            {
+                return new Order(
+                    id: Convert.ToInt32(reader["OID"]),
+                    userId: Convert.ToInt32(reader["UID"]),
+                    orderStatus: reader["OrderStatus"]?.ToString() ?? "",
+                    totalAmount: Convert.ToDecimal(reader["TotalAmount"]),
+                    deliveryAddress: reader["DeliveryAddress"]?.ToString() ?? "",
+                    orderDate: reader["OrderDate"] != DBNull.Value ? Convert.ToDateTime(reader["OrderDate"]) : DateTime.UtcNow,
+                    paymentMethod: reader["PaymentMethod"]?.ToString() ?? ""
+                );
+            }
             
-            return new Order(newId, order.UserId, order.OrderStatus, order.TotalAmount, 
-                           order.DeliveryAddress, order.OrderDate, order.PaymentMethod);
+            throw new InvalidOperationException("Failed to insert order");
         }
 
         public async Task<Order> UpdateOrderAsync(Order order, CancellationToken cancellationToken = default)

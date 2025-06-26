@@ -389,6 +389,20 @@ class DemoFoodOrderingViewModel(private val context: Context? = null) {
     // Replace the processPayment method in your Models.kt with this enhanced version
 
     fun processPayment(method: PaymentMethod) {
+        // First validate allowed payment methods
+        val allowedMethods = listOf(
+            PaymentMethod.CREDIT_CARD,
+            PaymentMethod.EDENRED,
+            PaymentMethod.SODEXO
+        )
+
+        if (!allowedMethods.contains(method)) {
+            paymentState = PaymentState.FAILED
+            errorMessage = "Payment method not accepted"
+            showToast("❌ ${method.displayName} is not accepted")
+            return
+        }
+
         if (loadingState != LoadingState.SUCCESS || products.isEmpty()) {
             showToast("❌ Cannot process payment: Data not loaded properly")
             paymentState = PaymentState.FAILED
@@ -440,11 +454,17 @@ class DemoFoodOrderingViewModel(private val context: Context? = null) {
                                 paymentState = PaymentState.SUCCESS
                                 showToast("🎉 Payment successful! Order #${response.orderId} confirmed")
                                 Log.i("ViewModel", "✅ Order ${response.orderId} created and confirmed successfully")
+
+                                // Clear cart only after successful payment and confirmation
+                                cartItems = emptyList()
                             } else {
-                                // Payment succeeded but status update failed - still show success
-                                paymentState = PaymentState.SUCCESS
-                                showToast("🎉 Payment successful! Order #${response.orderId} (status update pending)")
-                                Log.w("ViewModel", "⚠️ Payment succeeded but status update failed for order ${response.orderId}")
+                                // Payment succeeded but status update failed - offer option to cancel
+                                paymentState = PaymentState.FAILED
+                                errorMessage = "Payment processed but confirmation failed"
+                                showToast("⚠️ Payment processed but confirmation failed. Order #${response.orderId}")
+
+                                // Give user option to cancel the order
+                                offerOrderCancellation(response.orderId)
                             }
                         } else {
                             paymentState = PaymentState.FAILED
@@ -471,6 +491,64 @@ class DemoFoodOrderingViewModel(private val context: Context? = null) {
                 showToast("❌ Payment processing failed: ${e.message}")
                 Log.e("ViewModel", "❌ Payment processing exception", e)
             }
+        }
+    }
+
+    // Add these new methods to your ViewModel
+    private fun offerOrderCancellation(orderId: Int) {
+        // This would typically trigger a UI dialog in your composable
+        // For now we'll just log and show a toast
+        Log.w("ViewModel", "⚠️ Offering cancellation for order $orderId")
+        showToast("⚠️ Would you like to cancel order #$orderId?")
+
+        // In a real app, you would:
+        // 1. Show a dialog with cancel/retry options
+        // 2. Call cancelOrder() if user chooses to cancel
+    }
+
+    private suspend fun cancelOrder(orderId: Int, reason: String = "Payment confirmation failed"): Boolean {
+        return try {
+            Log.d("ViewModel", "🔄 Attempting to cancel order $orderId...")
+
+            val apiService = ApiClient.getApiService()
+            val response = apiService.cancelOrder(
+                CancelOrderRequest(
+                    orderId = orderId,
+                    userId = currentUserId,
+                    reason = reason
+                )
+            )
+
+            Log.d("ViewModel", "📊 Cancel response code: ${response.code()}")
+
+            if (response.isSuccessful) {
+                response.body()?.let { cancelResponse ->
+                    Log.d("ViewModel", "📊 Cancel response: $cancelResponse")
+
+                    if (cancelResponse.success) {
+                        Log.i("ViewModel", "✅ Order $orderId cancelled successfully")
+                        showToast("Order #$orderId cancelled")
+                        true
+                    } else {
+                        Log.e("ViewModel", "❌ Cancel failed: ${cancelResponse.message}")
+                        showToast("Failed to cancel order: ${cancelResponse.message}")
+                        false
+                    }
+                } ?: run {
+                    Log.e("ViewModel", "❌ Empty cancel response body")
+                    showToast("Failed to cancel order: Empty response")
+                    false
+                }
+            } else {
+                val errorBody = response.errorBody()?.string()
+                Log.e("ViewModel", "❌ Cancel HTTP error ${response.code()}: $errorBody")
+                showToast("Failed to cancel order: HTTP ${response.code()}")
+                false
+            }
+        } catch (e: Exception) {
+            Log.e("ViewModel", "❌ Cancel order exception", e)
+            showToast("Error cancelling order: ${e.message}")
+            false
         }
     }
 
