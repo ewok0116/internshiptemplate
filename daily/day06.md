@@ -13,8 +13,10 @@
 - Learned more about Dependency Injection:
 
   -Dependency Injection: It is a principle in which objects get their dependencies from external source instead of creating each object under the class. It is like you pass a value but you actually pass the dependency of the object. In addition, dependency is what is needed for a class object that we normally write under class like "this.db = new DataBase('db.sqlite')" this, however in dependency injection, we pass it into as db:Database like a parameter and then just say this.db = db. This was also an example for Constructor injection. In DI there are several injection types. such as Setter injection adn Interface injection. main logic is the same. in which we get dependencies from an external soruce. 
-            -Pros of using DI: It is flexible. In other words, it is easy to change app's behaviour and objects are reusable. For example in the example I gave above about consturctor injection. thanks to DI, I would have been able to change the db without changing the code. I can also use other design patterns such as singleton or factory. Since the code does not change but how we use it up to us.
-            -Cons of using DI: Since, the dependencies are gathered from an external source it would be hard to track which object comes from where. In addition, it becomes hard to understand what that class needs so I need to give a clear name to the object.
+
+  -Pros of using DI: It is flexible. In other words, it is easy to change app's behaviour and objects are reusable. For example in the example I gave above about consturctor injection. thanks to DI, I would have been able to change the db without changing the code. I can also use other design patterns such as singleton or factory. Since the code does not change but how we use it up to us.
+
+  -Cons of using DI: Since, the dependencies are gathered from an external source it would be hard to track which object comes from where. In addition, it becomes hard to understand what that class needs so I need to give a clear name to the object.
             
 -When to use? When working on a complex app. It would save you from useless codes and since it is easy to change teams can easily implement on that project. therefore it is a good principle for big companies to use.
 
