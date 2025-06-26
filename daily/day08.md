@@ -7,9 +7,14 @@
 
 ## 📘 What I Learned
 
-- Finished User part of the backend (without dependency injection adn inversion but with a clean architecture meaning it has repository etc.) and acquired connection woth the db.
--Wanted to add Dependency injection and dependency inversion to the project. Therefore made a research on that area.
-- Dependency Inversion: High-level modules such as files in domain level which contains business logic etc. should not rely on low level modules such as UserRepo in infrastructure layer, 
+- Had connection problems while using work computer. Still do not know the issue, however it might be related with having more than one MSSQLSERVER. Could not fix it but at least
+establisehd a connection.
+
+- Finished User part of the backend (without dependency injection and inversion but with a clean architecture meaning it has repository etc.) and acquired connection with the db.
+  
+- Wanted to add Dependency injection and dependency inversion to the project. Therefore made a research on that area.
+
+  -Dependency Inversion: High-level modules such as files in domain level which contains business logic etc. should not rely on low level modules such as UserRepo in infrastructure layer, 
 therefore both should depend on abstraction. Moreover, abstractions should not rely on details; details should rely on abstraction. Since modules are connected to abstract, 
 it is low coupling meaning if in a project a low coupling design is wanted dependency inversion can be used. We should ask whether the dependency will be changed or not 
 and if the answer is yes then it is logical to use Dependency Inversion since abstract module is used.
