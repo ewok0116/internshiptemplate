@@ -27,12 +27,42 @@ After that, I started implementing Dependency Injection to User, Product and Cat
 
 #Day-12
 
-Today, I continued editing Backend. Yesterday I've finished GET methods and today I continued from PUT and POST. While in th eprocess of editing the POST and PUT filess I realized that I had 2 features in Order folder. CreateOrder and GetORder. However, in CreeteOrder I was doing much more than just creating. I was updating and calculating etc. Therefore, I needed to create new features to seperate them from CreateOrder. I created: CalculateOrdertotal, UpdateOrderStatus, CancelOrder, ValidateOrderItem. I also created OrderHistory and OrderReport but was not sure whether I will use them or not so they are just staying as a folder for now. In addition aside from UpdateOrderStatus. I might delete other folders aswell cause there is no need for validation cause the OrderItem is doing the validation in itself anyway. Moreover, CalculateOrder is also done by the db so not sure if they are necessary to add. tomorrow they might get deleted aswell.
+Today, I continued editing Backend. Yesterday I've finished GET methods and today I continued from PUT and POST. While in the process of editing the POST and PUT files, I realized that I had 2 features in Order folder. CreateOrder and GetORder. However, in CreateOrder I was doing much more than just creating. I was updating and calculating etc. Therefore, I needed to create new features to seperate them from CreateOrder. 
+
+- I created: CalculateOrdertotal, UpdateOrderStatus, CancelOrder, ValidateOrderItem. I also created OrderHistory and OrderReport but was not sure whether I will use them or not so they are just staying as a folder for now. In addition aside from UpdateOrderStatus. I might delete other folders aswell cause there is no need for validation cause the OrderItem is doing the validation in itself anyway. Moreover, CalculateOrder is also done by the db so not sure if they are necessary to add. tomorrow they might get deleted aswell.
 In the process of editing I learned more about PUT method.
-PUT: POST changes the data, but cretaes duplicatess; GET does not changes the dat aand does not creat duplicatess. WhereAs PUT changes data and does not creat duplicates. PUT is used mostly on Update operations becausse of that. Like it is used in my project. PUT is used for updateing the status.
-In the end I was able to create each features' repository, response, query adn handler. In addition, each feature has tyheir own endpoints. Moreover, for CreateOrder a Service was created. The web service was woeking well with the Postman, but wehn I tried it with Android Studio, no matter what I did it just could not connect with the web service. 
-In the end, I realised that the responses of web service and android studio was different so on web service side I made all of the responses 'data'. After that, I was able to get 
-data from db. but this time I had a problem with PaymentDialog. The UpdateStatuss was not working. I fixed processPayment om FoodModels and in the en d in the db it was seen as confirmed. However, all of the methodss were giving Confirmed. So Tomorrow I need to change some methods to failed.
+
+ - PUT: POST changes the data, but creates duplicates; GET does not changes the data and does not create duplicates. Whereas, PUT changes data AND does not create duplicates. PUT is used mostly on Update operations because of that. In my project I'am also using for updating. It is used for updateing the status (UpdateStatus Feature).
+
+ -In the end I was able to create each features' repository, response, query and handler. In addition, each feature acquired their own endpoints. Moreover, for CreateOrder a Service was created. 
+ 
+The web service was working well with the Postman, but when I tried it with Android Studio, no matter what I did it just could not connect with the web service. 
+In the end, I learned debugging (I knew debug, but I assumed it would consume more time solving the problem. However, In the end I was wrong and the problem was solved within an hour thanks to that), and I realised that the responses of web service and android studio was different so on web service side, so I convterted all of the responses (For example the name 'user' inside GetUserResponse.cs) to 'data. 
+    After that, I was able to get data from db. but this time I had a problem with PaymentDialog. The UpdateStatus was not working. I fixed processPayment method on FoodModels so that when porocess payment is successs it will go into db and State will be seen as Confirmed. However, now in the db there won't be a state aside from 'Confirmed'. Since only the Confirmed ones are accepted to the db. So Tomorrow I need to think more about this issue. 
+
+#Day-13
+
+- Today, I realized that my db was not fully ANSI SQL. It was partial ANSI SQL. First, I thought about fixing the db without creating a new one, however some of the features might encounter problems, so I decided not to take that risk in the end. I'am not sure whether any specific feature would have a problem if I tried changing the db instead of creating a new one. But like I said, I did not want to take any risks.
+  - There is ANSI SQL and non-ANSI SQL. ANSI SQL can be used with multiple DBs. In other words, it is compatible with most of the known DBs such as MySQL, SQL Server etc. If someone wants to run their code on multiple DBs; Then using ANSI SQL would be a better approach. Since, non-ANSI is not compatibel with other DBs and specifically used with that specific DB. However, the pros of it is sometimes DBs have their native funstions etc. In that case, if someone needs the whole specific functions of a DB, and will use only that DB; Then, using non-ANSI would be a better solution.
+  
+- I realized how important it is to have an architecture in the process of making changes on backend to obtain compatibility with ANSI SQL. My work was quite easy thanks to the clean architecturte I made. Because, I had seperated repositories from other code blocks. I only made changes on repository files such as UserRepository.cs and easily changed the whole DB in backend just like that.
+       
+      var sql = @"INSERT INTO Orders (UID, OrderStatus, TotalAmount, DeliveryAddress, OrderDate, PaymentMethod) 
+           OUTPUT INSERTED.OID 
+           VALUES (@UserId, @OrderStatus, @TotalAmount, @DeliveryAddress, @OrderDate, @PaymentMethod)";
+
+  these lines were changed in order to gather ANSI SQL format.
+
+      var sql = @"INSERT INTO Orders (UID, OrderStatus, TotalAmount, DeliveryAddress, OrderDate, PaymentMethod) 
+           VALUES (@UserId, @OrderStatus, @TotalAmount, @DeliveryAddress, CURRENT_TIMESTAMP, @PaymentMethod);
+           SELECT OID, UID, OrderStatus, TotalAmount, DeliveryAddress, OrderDate, PaymentMethod 
+           FROM Orders WHERE OID = SCOPE_IDENTITY();";
+            
+
+- I realized that the features I created such as UpdateState were useless since I do not have a receiver like restaurant that would change the order status. Therefore, I decided to get rid of them.
+
+- I realized that aside from coding, writing your accomplishments is also an important job. Therefore, spent rest of the day fixing my mistakes on daily, weekly and projects tab.
+
 
 
 
