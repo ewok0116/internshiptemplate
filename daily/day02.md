@@ -10,7 +10,7 @@
 ## 📘 What I Learned
 - I had learned more about git while I was trying to solve push problems
 - I learned what is build variant
-It is an important approach when a a programmer serves multiple companies. With build variant there are multiple themes that can be added to the project without changing the code. If a certain company hass the theme red and another company wants a blue theme it can be done by build variant.
+It is an important approach when a programmer serves multiple companies. With build variant there are multiple themes that can be added to the project without changing the code. If a certain company hass the theme red and another company wants a blue theme it can be done by build variant.
 - I learned more about design patterns. Especially, MVC.
 
 ## ❓ Questions
