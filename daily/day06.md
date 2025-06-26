@@ -18,6 +18,7 @@
 -When to use? When working on a complex app. It would save you from useless codes and since it is easy to change teams can easily implement on that project. therefore it is a good principle for big companies to use.
 
 - Learned more about Stateful and Stateless architecture:
+  
   -Stateful architecture: When there are many users there should be that many servers and each server should remember the user process, data. If a problem occurs and that server crashed. Then that user's data and all the process is lost. The user might be directed to another server, however her/his data is lost so he/she needs to start all over. It sounds bad right now but there are also pros for this. First of all it is faster since the data is already in the server. Moreover, since server has the user data it can maintain user preferance thtoughout the session. 
   -Real Life examples: Live gaming, video conferencing, trading apps.
         
