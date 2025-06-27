@@ -38,8 +38,8 @@ data from db. but this time I had a problem with PaymentDialog. The UpdateStatus
 
 #Day-13
 
-Today I started to make some changes on Project Tab in github because I got some advice yesterday about to give more detail in my project tab issues. So that even a random person could understand what is my project about. After ı finished the project tab, I started to edit Frontend Structure to be more neat, more understandable by others. To do that I needed to decide on which architecture and approach to use and in the end I was told that the important was to show the features the project has. Because it would be easier to
-implement or make changes on the projects later on. Therefore, In the end it was decided to use MVVM like architecture with vertical slicing approach like I did with Backend. I chose MVVM architecture.MVVM seperates the code in a three layers.
+Today I started to make some changes on Project Tab in github because I got some advice yesterday about to give more detail in my project tab issues. So that even a random person could understand what is my project about. After I finished the project tab, I started to edit Frontend Structure to be more neat, more understandable by others. To do that I needed to decide on which architecture and approach to use and in the end I was told that the important was to show the features the project has. Because it would be easier to
+implement or make changes on the projects later on. Therefore, In the end it was decided to use MVVM like architecture with vertical slicing approach like I did with Backend. I chose MVVM architecture. MVVM seperates the code in a three layers.
 
 View: My Composes screens such as CartScreen, HomeScreen, and it only displays UI and handles user interactions. For example when you tap "Add to Cart", the View tells the ViewModel
 
@@ -47,7 +47,7 @@ ViewModel: In the project it's DemoFoodOrderingViewModel, and it processes busin
 
 Model inside Data: In my project it's Product/CartItem classes and API network calls, and stores raw data and handles data operations such as product details, API responses from my backend
 
-I use it with Vertical Slicing and gather a team-friendly projetc. IN other words it is understandable and with vector slicing it is easier to implement and add features without changing the code. MVVM was also searched in the beginning but could not get the idea about implementing architectures to databases. Therefore, I was not able to implement it in beginning. I tried to implement the MVVM architecture with vertical slicing approach. I pushed the final folder structure to the git, however got many errors while editing code. So, it is not completed just yet.
+I use MVVM with vertical slicing and thanks to that gather a team-friendly project. In other words it is understandable and with vector slicing it is easier to implement and add features without changing the code. MVVM was also searched in the beginning but could not get the idea about implementing architectures to databases. Therefore, I was not able to implement it in beginning. I pushed the final folder structure to the git, however got many errors while editing code. So, it is not completed just yet.
 
 
 
