@@ -1,3 +1,6 @@
+
+
+
 package com.example.foodorderingapp
 
 import android.content.Context
@@ -324,3 +327,5 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
         }
     }
 }
+
+

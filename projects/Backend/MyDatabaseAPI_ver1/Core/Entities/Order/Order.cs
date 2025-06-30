@@ -6,7 +6,6 @@ namespace MyFoodOrderingAPI.Core.Entities
     {
         public int Id { get; private set; }
         public int UserId { get; private set; }
-        public string OrderStatus { get; private set; }
         public decimal TotalAmount { get; private set; }
         public string DeliveryAddress { get; private set; }
         public DateTime OrderDate { get; private set; }
@@ -28,44 +27,24 @@ namespace MyFoodOrderingAPI.Core.Entities
             TotalAmount = totalAmount;
             DeliveryAddress = deliveryAddress;
             PaymentMethod = paymentMethod;
-            OrderStatus = "Pending";
             OrderDate = DateTime.UtcNow;
         }
 
-        public Order(int id, int userId, string orderStatus, decimal totalAmount, string deliveryAddress, DateTime orderDate, string paymentMethod)
+        public Order(int id, int userId, decimal totalAmount, string deliveryAddress, DateTime orderDate, string paymentMethod)
         {
             Id = id;
             UserId = userId;
-            OrderStatus = orderStatus ?? "Pending";
             TotalAmount = totalAmount;
             DeliveryAddress = deliveryAddress ?? "";
             OrderDate = orderDate;
             PaymentMethod = paymentMethod ?? "";
         }
 
-        public void UpdateStatus(string newStatus)
-        {
-            var validStatuses = new[] { "Pending", "Confirmed", "Preparing", "Ready", "Delivered", "Cancelled" };
-            if (!validStatuses.Contains(newStatus))
-                throw new ArgumentException($"Invalid order status: {newStatus}");
-
-            OrderStatus = newStatus;
-        }
 
         public void AddOrderItem(OrderItem item)
         {
             OrderItems.Add(item);
         }
 
-        public bool CanBeCancelled()
-        {
-            return OrderStatus == "Pending" || OrderStatus == "Confirmed";
-        }
-
-        public void ConfirmOrder()
-        {
-            if (OrderStatus == "Pending")
-                OrderStatus = "Confirmed";
-        }
     }
 }

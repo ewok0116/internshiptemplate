@@ -1,3 +1,4 @@
+// build.gradle (Module: app)
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -50,6 +51,7 @@ android {
             manifestPlaceholders["appName"] = "Company B Food"
             buildConfigField("String", "COMPANY_THEME", "\"GREEN\"")
         }
+
         create("companyC") {
             dimension = "company"
             applicationIdSuffix = ".companyc"
@@ -85,7 +87,7 @@ android {
 }
 
 dependencies {
-    // Your existing dependencies...
+    // Core Android dependencies
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.activity:activity-compose:1.8.2")
@@ -95,13 +97,17 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
-    // ADD THESE NEW DEPENDENCIES FOR API INTEGRATION (Kotlin DSL syntax):
+    // ViewModel for clean architecture
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+
+    // Material Icons Extended
+    implementation("androidx.compose.material:material-icons-extended:1.5.4")
 
     // Retrofit for HTTP requests
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
-    // OkHttp for networking (optional but recommended)
+    // OkHttp for networking
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
@@ -112,7 +118,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
-    // Your existing test dependencies...
+    // Test dependencies
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")

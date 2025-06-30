@@ -108,7 +108,6 @@ namespace MyFoodOrderingAPI.Features.Orders.CreateOrder
                 return new CreateOrderResponse
                 {
                     OrderId = order.Id,
-                    OrderStatus = order.OrderStatus,
                     TotalAmount = order.TotalAmount,
                     OrderDate = order.OrderDate,
                     DeliveryAddress = order.DeliveryAddress,

@@ -1,3 +1,5 @@
+
+
 package com.example.foodorderingapp
 
 import android.content.Context
@@ -539,3 +541,5 @@ fun EmptyDatabaseScreen(
         }
     }
 }
+
+

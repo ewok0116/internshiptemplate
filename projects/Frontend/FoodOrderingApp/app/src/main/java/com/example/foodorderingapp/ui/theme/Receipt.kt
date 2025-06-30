@@ -1,3 +1,4 @@
+
 package com.example.foodorderingapp.ui.theme
 
 import androidx.compose.foundation.background
@@ -370,3 +371,4 @@ fun getPaymentMethodName(method: PaymentMethod): String {
         PaymentMethod.EDENRED -> "Edenred"
     }
 }
+

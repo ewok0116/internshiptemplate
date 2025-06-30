@@ -30,14 +30,13 @@ namespace MyFoodOrderingAPI.Features.Orders.GetOrders
             try
             {
                 _logger.LogInformation("=== GetOrdersHandler Started ===");
-                _logger.LogInformation("Request - UserId: {UserId}, Status: {Status}, Page: {PageNumber}", 
-                    request.UserId, request.Status, request.PageNumber);
+                _logger.LogInformation("Request - UserId: {UserId}, Page: {PageNumber}", 
+                    request.UserId,  request.PageNumber);
 
                 // Create filter from request
                 var filter = new OrderFilter
                 {
                     UserId = request.UserId,
-                    OrderStatus = request.Status,
                     PageNumber = request.PageNumber,
                     PageSize = request.PageSize,
                     OrderDateFrom = request.OrderDateFrom,
@@ -113,7 +112,6 @@ namespace MyFoodOrderingAPI.Features.Orders.GetOrders
                             Id = order.Id,
                             UserId = order.UserId,
                             UserName = userName,
-                            OrderStatus = order.OrderStatus,
                             TotalAmount = order.TotalAmount,
                             DeliveryAddress = order.DeliveryAddress,
                             OrderDate = order.OrderDate,

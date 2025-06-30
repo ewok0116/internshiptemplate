@@ -97,40 +97,9 @@ namespace MyFoodOrderingAPI.Infrastructure.Services
             return await _orderRepository.GetOrderWithItemsAsync(orderId, cancellationToken);
         }
 
-        public async Task<bool> CancelOrderAsync(int orderId, int userId, CancellationToken cancellationToken = default)
-        {
-            var order = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
-            
-            if (order == null)
-                return false;
+      
 
-            if (order.UserId != userId)
-                throw new UnauthorizedAccessException("Order does not belong to user");
-
-            if (!order.CanBeCancelled())
-                throw new InvalidOperationException($"Order with status '{order.OrderStatus}' cannot be cancelled");
-
-            order.UpdateStatus("Cancelled");
-            await _orderRepository.UpdateOrderAsync(order, cancellationToken);
-
-            _logger.LogInformation("Order {OrderId} cancelled by user {UserId}", orderId, userId);
-            return true;
-        }
-
-        public async Task<Order> UpdateOrderStatusAsync(int orderId, string newStatus, CancellationToken cancellationToken = default)
-        {
-            var order = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
-            
-            if (order == null)
-                throw new ArgumentException($"Order {orderId} not found");
-
-            order.UpdateStatus(newStatus);
-            var updatedOrder = await _orderRepository.UpdateOrderAsync(order, cancellationToken);
-
-            _logger.LogInformation("Order {OrderId} status updated to {Status}", orderId, newStatus);
-            return updatedOrder;
-        }
-
+       
         public async Task<decimal> CalculateOrderTotalAsync(List<OrderItemRequest> items, CancellationToken cancellationToken = default)
         {
             decimal total = 0;

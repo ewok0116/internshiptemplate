@@ -75,7 +75,6 @@ namespace MyFoodOrderingAPI.Features.Orders.GetOrders
                     Id = order.Id,
                     UserId = order.UserId,
                     UserName = userName,
-                    OrderStatus = order.OrderStatus,
                     TotalAmount = order.TotalAmount,
                     DeliveryAddress = order.DeliveryAddress,
                     OrderDate = order.OrderDate,

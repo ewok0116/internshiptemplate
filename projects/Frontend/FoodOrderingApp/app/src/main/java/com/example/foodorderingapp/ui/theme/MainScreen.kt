@@ -1,3 +1,5 @@
+
+
 // Create this file: ui/MainScrollablePage.kt (or update your existing one)
 package com.example.foodorderingapp.ui.theme
 
@@ -310,3 +312,5 @@ fun ProductCard(
         }
     }
 }
+
+

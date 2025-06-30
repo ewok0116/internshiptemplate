@@ -58,8 +58,8 @@ namespace MyFoodOrderingAPI.Features.OrderItems.GetOrderItems
                         };
                     }
 
-                    _logger.LogInformation("✅ Found order {OrderId} - Status: {Status}, Amount: {Amount}", 
-                        order.Id, order.OrderStatus, order.TotalAmount);
+                    _logger.LogInformation("✅ Found order {OrderId}, Amount: {Amount}", 
+                        order.Id, order.TotalAmount);
                 }
                 catch (Exception orderEx)
                 {

@@ -61,7 +61,6 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
                 var order = new Order(
                     id: Convert.ToInt32(reader["OID"]),
                     userId: Convert.ToInt32(reader["UID"]),
-                    orderStatus: reader["OrderStatus"]?.ToString() ?? "Pending",
                     totalAmount: Convert.ToDecimal(reader["TotalAmount"]),
                     deliveryAddress: reader["DeliveryAddress"]?.ToString() ?? "",
                     orderDate: reader["OrderDate"] != DBNull.Value ? Convert.ToDateTime(reader["OrderDate"]) : DateTime.UtcNow,
@@ -88,7 +87,6 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
                 return new Order(
                     id: Convert.ToInt32(reader["OID"]),
                     userId: Convert.ToInt32(reader["UID"]),
-                    orderStatus: reader["OrderStatus"]?.ToString() ?? "Pending",
                     totalAmount: Convert.ToDecimal(reader["TotalAmount"]),
                     deliveryAddress: reader["DeliveryAddress"]?.ToString() ?? "",
                     orderDate: reader["OrderDate"] != DBNull.Value ? Convert.ToDateTime(reader["OrderDate"]) : DateTime.UtcNow,
@@ -146,15 +144,14 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
             await connection.OpenAsync(cancellationToken);
             
             // ⭐ CHANGE: Use CURRENT_TIMESTAMP and separate INSERT/SELECT
-            var sql = @"INSERT INTO Orders (UID, OrderStatus, TotalAmount, DeliveryAddress, OrderDate, PaymentMethod) 
-                       VALUES (@UserId, @OrderStatus, @TotalAmount, @DeliveryAddress, CURRENT_TIMESTAMP, @PaymentMethod);
-                       SELECT OID, UID, OrderStatus, TotalAmount, DeliveryAddress, OrderDate, PaymentMethod 
+            var sql = @"INSERT INTO Orders (UID, TotalAmount, DeliveryAddress, OrderDate, PaymentMethod) 
+                       VALUES (@UserId, @TotalAmount, @DeliveryAddress, CURRENT_TIMESTAMP, @PaymentMethod);
+                       SELECT OID, UID, TotalAmount, DeliveryAddress, OrderDate, PaymentMethod 
                        FROM Orders WHERE OID = SCOPE_IDENTITY();";
             
             using var command = new SqlCommand(sql, connection);
             
             command.Parameters.AddWithValue("@UserId", order.UserId);
-            command.Parameters.AddWithValue("@OrderStatus", order.OrderStatus);
             command.Parameters.AddWithValue("@TotalAmount", order.TotalAmount);
             command.Parameters.AddWithValue("@DeliveryAddress", order.DeliveryAddress);
             command.Parameters.AddWithValue("@PaymentMethod", order.PaymentMethod);
@@ -166,7 +163,6 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
                 return new Order(
                     id: Convert.ToInt32(reader["OID"]),
                     userId: Convert.ToInt32(reader["UID"]),
-                    orderStatus: reader["OrderStatus"]?.ToString() ?? "",
                     totalAmount: Convert.ToDecimal(reader["TotalAmount"]),
                     deliveryAddress: reader["DeliveryAddress"]?.ToString() ?? "",
                     orderDate: reader["OrderDate"] != DBNull.Value ? Convert.ToDateTime(reader["OrderDate"]) : DateTime.UtcNow,
@@ -189,7 +185,6 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
             using var command = new SqlCommand(sql, connection);
             
             command.Parameters.AddWithValue("@Id", order.Id);
-            command.Parameters.AddWithValue("@OrderStatus", order.OrderStatus);
             command.Parameters.AddWithValue("@TotalAmount", order.TotalAmount);
             command.Parameters.AddWithValue("@DeliveryAddress", order.DeliveryAddress);
             command.Parameters.AddWithValue("@PaymentMethod", order.PaymentMethod);
