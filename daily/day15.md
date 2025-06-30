@@ -2,6 +2,7 @@
 ## ✅ Objectives
 - [x] Remove status column from DB
 - [x] Remove status and status related features
+- [x] Edit Frontend folder structure
 
 ## 📘 What I Learned
 - I had decided to remove UpdateStatus feature in Backend. Furthermore, I had decided to remove status entirely.
