@@ -63,7 +63,25 @@ In the end, I learned debugging (I knew debug, but I assumed it would consume mo
 
 - I realized that aside from coding, writing your accomplishments is also an important job. Therefore, spent rest of the day fixing my mistakes on daily, weekly and projects tab.
 
+#Day-14
 
+Today I started to make some changes on Project Tab in github because I got some advice yesterday about to give more detail in my project tab issues. So that even a random person could understand what is my project about. After I finished the project tab, I started to edit Frontend Structure to be more neat, more understandable by others. To do that I needed to decide on which architecture and approach to use and in the end I was told that the important was to show the features the project has. Because it would be easier to implement or make changes on the projects later on. Therefore, In the end it was decided to use MVVM like architecture with vertical slicing approach like I did with Backend. I chose MVVM architecture. MVVM seperates the code in a three layers.
+
+ - View: My Composes screens such as CartScreen, HomeScreen, and it only displays UI and handles user interactions. For example when you tap "Add to Cart", the View tells the ViewModel
+
+ - ViewModel: In the project it's DemoFoodOrderingViewModel, and it processes business logic, manages data, and prepares it for the View For example: Calculates cart totals, handles payment processing, and updates product lists
+
+ - Model inside Data: In my project it's Product/CartItem classes and API network calls, and stores raw data and handles data operations such as product details, API responses from my backend
+
+I use MVVM with vertical slicing and thanks to that gather a team-friendly project. In other words it is understandable and with vector slicing it is easier to implement and add features without changing the code. MVVM was also searched in the beginning but could not get the idea about implementing architectures to databases. Therefore, I was not able to implement it in beginning. I pushed the final folder structure to the git, however got many errors while editing code. So, it is not completed just yet.
+
+#Day-15
+
+- Started the day by continuing edit of frontend structure. Last time I was working, I was trying to implement both clean architecture and vertical slicing at the same time, however it became complicated after a while, so today new approach was decided to use.The new approach is to implement clean architecture first, then add vector slicing. 
+
+- After some time working on this new approach, I encountered with UpdateStatus function. Which made me remembered that I needed to got rid of "status" in Orders since I do not have a restaurant side etc. In the end, I deleted the column and its constraints (which was just a default db constraint) in SQL Server. Then I started implementing the backend side in order to get rid of these "status" feature. After I finished the status situation, I turned back to editing Frontend structure but this time I had problem with dependencies that were giving errors. In addition, I was having error with imports aswell. Specifically .compose which I could not figure out why.
+
+- Moreover, I had problem with "di" package which was containning the Dependency injection files. At first, I tried to use Hilt injection,  which is a library for android built on top of dagger. I tried to add dagger to my build gradle but had errors. In the end, I decided not to use Hilt. In addition, this library may be out of date later on. Therefore, like I said; I decided to stick with the personal dependency injection.
 
 
 
