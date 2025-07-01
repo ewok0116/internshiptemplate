@@ -1,3 +1,6 @@
+/*
+
+
 // Features/Products/GetProducts/GetProductsController.cs
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -30,3 +33,5 @@ namespace MyFoodOrderingAPI.Features.Products.GetProducts
         }
     }
 }
+
+*/

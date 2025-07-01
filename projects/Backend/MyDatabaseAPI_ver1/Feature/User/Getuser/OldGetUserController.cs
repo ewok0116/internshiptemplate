@@ -1,25 +1,26 @@
+/*
 
-// Features/Categories/GetCategories/GetCategoriesController.cs
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MyFoodOrderingAPI.Features.Categories.GetCategories
+namespace MyFoodOrderingAPI.Features.Users.GetUsers
 {
     [ApiController]
-    [Route("api/categories")]
-    public class GetCategoriesController : ControllerBase
+    [Route("api/users")]
+    public class GetUsersController : ControllerBase
     {
         private readonly IMediator _mediator;
 
-        public GetCategoriesController(IMediator mediator)
+        public GetUsersController(IMediator mediator)
         {
             _mediator = mediator;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetCategories([FromQuery] GetCategoriesQuery query)
+        public async Task<IActionResult> GetUsers([FromQuery] GetUsersQuery query)
         {
             var response = await _mediator.Send(query);
+            
             if (response.Success)
             {
                 return Ok(response);
@@ -31,3 +32,4 @@ namespace MyFoodOrderingAPI.Features.Categories.GetCategories
         }
     }
 }
+*/

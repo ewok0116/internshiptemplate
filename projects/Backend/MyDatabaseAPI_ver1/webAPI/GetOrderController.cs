@@ -1,9 +1,9 @@
-
-// Features/Orders/GetOrders/GetOrdersController.cs
+// WebAPI/Controllers/Orders/GetOrdersController.cs
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using MyFoodOrderingAPI.Features.Orders.GetOrders;
 
-namespace MyFoodOrderingAPI.Features.Orders.GetOrders
+namespace MyFoodOrderingAPI.WebAPI.Controllers.Orders
 {
     [ApiController]
     [Route("api/orders")]
