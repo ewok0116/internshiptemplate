@@ -38,5 +38,5 @@ this. But they should have been imported like:
              
   - CQS: Commands and queries have seperation in which read and write operations are in the same model. Commands-->Write, Queries-->Read.
   - CQRS: Upgraded CQS. Now the read write operations are seperated (Different models or different DBs)
-    
-   
+
+- In addition, My FoodOrderingApp_ver2 is crashing after I say Connect to DB on StartingPage. Tomorrow, I will debug it and plan to finish the structure of Frontend.   
