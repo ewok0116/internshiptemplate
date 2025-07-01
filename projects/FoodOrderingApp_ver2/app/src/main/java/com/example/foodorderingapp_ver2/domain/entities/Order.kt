@@ -1,6 +1,6 @@
 
 // domain/entities/Order.kt
-package com.example.foodorderingapp.domain.entities
+package com.example.foodorderingapp_ver2.domain.entities
 
 import java.util.Date
 

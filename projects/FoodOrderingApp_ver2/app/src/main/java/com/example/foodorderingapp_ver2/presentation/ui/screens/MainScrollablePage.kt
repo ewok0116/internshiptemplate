@@ -1,6 +1,6 @@
 
 // ui/screens/MainScrollablePage.kt
-package com.example.foodorderingapp.ui.screens
+package com.example.foodorderingapp_ver2.presentation.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,9 +22,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.foodorderingapp.presentation.viewmodel.FoodOrderingViewModel
-import com.example.foodorderingapp.domain.entities.Product
-import com.example.foodorderingapp.ui.theme.LocalAppTheme
+import com.example.foodorderingapp_ver2.presentation.viewmodel.FoodOrderingViewModel
+import com.example.foodorderingapp_ver2.domain.entities.Product
+import com.example.foodorderingapp_ver2.presentation.ui.theme.LocalAppTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

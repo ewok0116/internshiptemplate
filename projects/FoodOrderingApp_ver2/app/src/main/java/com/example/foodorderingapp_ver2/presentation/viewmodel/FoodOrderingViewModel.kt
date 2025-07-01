@@ -1,5 +1,5 @@
 // presentation/viewmodel/FoodOrderingViewModel.kt
-package com.example.foodorderingapp.presentation.viewmodel
+package com.example.foodorderingapp_ver2.presentation.viewmodel
 
 // presentation/viewmodel/FoodOrderingViewModel.kt - FIXED IMPORTS
 
@@ -8,9 +8,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import android.util.Log
-import com.example.foodorderingapp.domain.entities.*
-import com.example.foodorderingapp.domain.usecases.*
-import com.example.foodorderingapp.domain.common.Result
+import com.example.foodorderingapp_ver2.domain.entities.*
+import com.example.foodorderingapp_ver2.domain.usecases.*
+import com.example.foodorderingapp_ver2.domain.common.Result
 // UI State Classes
 data class CartItemUi(
     val product: Product,
@@ -50,7 +50,6 @@ class FoodOrderingViewModel(
     private val searchProductsUseCase: SearchProductsUseCase,
     private val getProductsByCategoryUseCase: GetProductsByCategoryUseCase,
     private val createOrderUseCase: CreateOrderUseCase,
-    private val updateOrderStatusUseCase: UpdateOrderStatusUseCase,
     private val testConnectionUseCase: TestConnectionUseCase,
     private val initializeConnectionUseCase: InitializeConnectionUseCase,
     private val onShowToast: (String) -> Unit = {}
@@ -266,11 +265,6 @@ class FoodOrderingViewModel(
                     is Result.Success -> {
                         Log.i("ViewModel", "✅ Order ${result.data.id} created successfully")
 
-                        // Update order status to confirmed
-                        val updateParams = UpdateOrderStatusParams(
-                            orderId = result.data.id,
-                            status = OrderStatus.CONFIRMED
-                        )
 
                         // Note: The current API doesn't return full order data on status update
                         // So we'll consider the payment successful after order creation
@@ -384,44 +378,5 @@ class FoodOrderingViewModel(
 
     fun clearError() {
         uiState = uiState.copy(errorMessage = null)
-    }
-}
-
-// presentation/di/ViewModelFactory.kt
-package com.example.foodorderingapp.presentation.di
-
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import com.example.foodorderingapp.presentation.viewmodel.FoodOrderingViewModel
-import com.example.foodorderingapp.domain.usecases.*
-
-class FoodOrderingViewModelFactory(
-    private val getProductsUseCase: GetProductsUseCase,
-    private val getCategoriesUseCase: GetCategoriesUseCase,
-    private val searchProductsUseCase: SearchProductsUseCase,
-    private val getProductsByCategoryUseCase: GetProductsByCategoryUseCase,
-    private val createOrderUseCase: CreateOrderUseCase,
-    private val updateOrderStatusUseCase: UpdateOrderStatusUseCase,
-    private val testConnectionUseCase: TestConnectionUseCase,
-    private val initializeConnectionUseCase: InitializeConnectionUseCase,
-    private val onShowToast: (String) -> Unit
-) : ViewModelProvider.Factory {
-
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(FoodOrderingViewModel::class.java)) {
-            return FoodOrderingViewModel(
-                getProductsUseCase = getProductsUseCase,
-                getCategoriesUseCase = getCategoriesUseCase,
-                searchProductsUseCase = searchProductsUseCase,
-                getProductsByCategoryUseCase = getProductsByCategoryUseCase,
-                createOrderUseCase = createOrderUseCase,
-                updateOrderStatusUseCase = updateOrderStatusUseCase,
-                testConnectionUseCase = testConnectionUseCase,
-                initializeConnectionUseCase = initializeConnectionUseCase,
-                onShowToast = onShowToast
-            ) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

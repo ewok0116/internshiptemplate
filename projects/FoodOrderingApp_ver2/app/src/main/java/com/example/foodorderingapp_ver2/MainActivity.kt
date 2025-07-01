@@ -1,24 +1,29 @@
 // MainActivity.kt - Updated for new UI structure
-package com.example.foodorderingapp
+package com.example.foodorderingapp_ver2
 
 import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+import androidx.activity.compose.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.foodorderingapp.presentation.viewmodel.*
-import com.example.foodorderingapp.presentation.di.FoodOrderingViewModelFactory
-import com.example.foodorderingapp.ui.theme.*
-import com.example.foodorderingapp.ui.screens.*
-import com.example.foodorderingapp.ui.dialogs.*
-import com.example.foodorderingapp.di.AppDependencies
+import com.example.foodorderingapp_ver2.presentation.viewmodel.*
+import com.example.foodorderingapp_ver2.presentation.ui.*
+import com.example.foodorderingapp_ver2.presentation.ui.screens.*
+import com.example.foodorderingapp_ver2.presentation.ui.theme.*
+import com.example.foodorderingapp_ver2.presentation.ui.dialogs.*
+import com.example.foodorderingapp_ver2.presentation.di.AppDependencies
+import com.example.foodorderingapp_ver2.presentation.di.FoodOrderingViewModelFactory  // ADD THIS IMPORT
+import com.example.foodorderingapp_ver2.presentation.ui.screens.ConfigScreen
+
 import kotlinx.coroutines.delay
+
+
 
 class MainActivity : ComponentActivity() {
     private lateinit var appDependencies: AppDependencies
@@ -73,7 +78,6 @@ fun FoodOrderingApp(
             searchProductsUseCase = appDependencies.searchProductsUseCase,
             getProductsByCategoryUseCase = appDependencies.getProductsByCategoryUseCase,
             createOrderUseCase = appDependencies.createOrderUseCase,
-            updateOrderStatusUseCase = appDependencies.updateOrderStatusUseCase,
             testConnectionUseCase = appDependencies.testConnectionUseCase,
             initializeConnectionUseCase = appDependencies.initializeConnectionUseCase,
             onShowToast = { message ->

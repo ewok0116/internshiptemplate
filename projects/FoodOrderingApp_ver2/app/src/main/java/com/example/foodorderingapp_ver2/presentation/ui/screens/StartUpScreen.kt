@@ -1,5 +1,5 @@
 // ui/screens/StartupScreen.kt
-package com.example.foodorderingapp.ui.screens
+package com.example.foodorderingapp_ver2.presentation.ui.screens
 
 import android.content.Context
 import androidx.compose.foundation.background
@@ -15,7 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.foodorderingapp.ui.theme.LocalAppTheme
+import com.example.foodorderingapp_ver2.presentation.ui.theme.LocalAppTheme
 
 @Composable
 fun StartupScreen(

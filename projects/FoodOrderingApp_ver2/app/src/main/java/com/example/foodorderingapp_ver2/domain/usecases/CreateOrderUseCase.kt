@@ -1,10 +1,10 @@
 // domain/usecases/CreateOrderUseCase.kt
-package com.example.foodorderingapp.domain.usecases
+package com.example.foodorderingapp_ver2.domain.usecases
 
-import com.example.foodorderingapp.domain.entities.*
-import com.example.foodorderingapp.domain.repositories.OrderRepository
-import com.example.foodorderingapp.domain.common.Result
-import com.example.foodorderingapp.domain.common.UseCase
+import com.example.foodorderingapp_ver2.domain.entities.*
+import com.example.foodorderingapp_ver2.domain.repositories.OrderRepository
+import com.example.foodorderingapp_ver2.domain.common.Result
+import com.example.foodorderingapp_ver2.domain.common.UseCase
 
 data class CreateOrderParams(
     val userId: Int,

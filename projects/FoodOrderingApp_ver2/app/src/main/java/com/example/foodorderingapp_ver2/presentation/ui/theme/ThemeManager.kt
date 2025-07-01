@@ -1,5 +1,4 @@
-
-// ui/theme/ThemeManager.kt
+// presentation/ui/theme/ThemeManager.kt
 package com.example.foodorderingapp_ver2.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
@@ -44,13 +43,26 @@ object ThemeManager {
     )
 
     fun getCurrentTheme(): AppTheme {
-        return when (com.example.foodorderingapp.BuildConfig.COMPANY_THEME) {
-            "ORANGE" -> orangeTheme
-            "GREEN" -> greenTheme
-            "PURPLE" -> purpleTheme
-            else -> orangeTheme // Default fallback
+        return try {
+            // Try to get the build config
+            val companyTheme = getCompanyTheme()
+            when (companyTheme) {
+                "ORANGE" -> orangeTheme
+                "GREEN" -> greenTheme
+                "PURPLE" -> purpleTheme
+                else -> orangeTheme // Default fallback
+            }
+        } catch (e: Exception) {
+            // If BuildConfig fails, return default
+            orangeTheme
+        }
+    }
+
+    private fun getCompanyTheme(): String {
+        return try {
+            com.example.foodorderingapp_ver2.BuildConfig.COMPANY_THEME
+        } catch (e: Exception) {
+            "ORANGE" // Default
         }
     }
 }
-
-

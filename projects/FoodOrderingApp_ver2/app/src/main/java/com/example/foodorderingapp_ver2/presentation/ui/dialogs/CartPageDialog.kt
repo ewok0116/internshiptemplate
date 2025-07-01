@@ -1,5 +1,5 @@
 // ui/dialogs/CartPageDialog.kt
-package com.example.foodorderingapp.ui.dialogs
+package com.example.foodorderingapp_ver2.presentation.ui.dialogs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -20,9 +20,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.example.foodorderingapp.presentation.viewmodel.FoodOrderingViewModel
-import com.example.foodorderingapp.presentation.viewmodel.CartItemUi
-import com.example.foodorderingapp.ui.theme.LocalAppTheme
+import com.example.foodorderingapp_ver2.presentation.viewmodel.FoodOrderingViewModel
+import com.example.foodorderingapp_ver2.presentation.viewmodel.CartItemUi
+import com.example.foodorderingapp_ver2.presentation.ui.theme.LocalAppTheme
 
 @Composable
 fun CartPageDialog(viewModel: FoodOrderingViewModel) {

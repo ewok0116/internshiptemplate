@@ -1,9 +1,9 @@
 
 // domain/repositories/OrderRepository.kt
-package com.example.foodorderingapp.domain.repositories
+package com.example.foodorderingapp_ver2.domain.repositories
 
-import com.example.foodorderingapp.domain.entities.*
-import com.example.foodorderingapp.domain.common.Result
+import com.example.foodorderingapp_ver2.domain.entities.*
+import com.example.foodorderingapp_ver2.domain.common.Result
 
 interface OrderRepository {
     suspend fun createOrder(

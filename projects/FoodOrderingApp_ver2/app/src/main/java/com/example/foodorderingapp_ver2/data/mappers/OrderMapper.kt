@@ -1,9 +1,9 @@
 
 // data/mappers/OrderMapper.kt
-package com.example.foodorderingapp.data.mappers
+package com.example.foodorderingapp_ver2.data.mappers
 
-import com.example.foodorderingapp.domain.entities.*
-import com.example.foodorderingapp.data.remote.*
+import com.example.foodorderingapp_ver2.domain.entities.*
+import com.example.foodorderingapp_ver2.data.remote.*
 import java.text.SimpleDateFormat
 import java.util.*
 

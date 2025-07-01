@@ -1,8 +1,8 @@
 
 // domain/repositories/ConnectionRepository.kt
-package com.example.foodorderingapp.domain.repositories
+package com.example.foodorderingapp_ver2.domain.repositories
 
-import com.example.foodorderingapp.domain.common.Result
+import com.example.foodorderingapp_ver2.domain.common.Result
 
 interface ConnectionRepository {
     suspend fun testConnection(): Result<Boolean>

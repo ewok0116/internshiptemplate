@@ -1,5 +1,5 @@
 
-
+// presentation/ui/theme/Typography.kt
 package com.example.foodorderingapp_ver2.presentation.ui.theme
 
 import androidx.compose.material3.Typography
@@ -34,6 +34,3 @@ val Typography = Typography(
     )
     */
 )
-
-
-

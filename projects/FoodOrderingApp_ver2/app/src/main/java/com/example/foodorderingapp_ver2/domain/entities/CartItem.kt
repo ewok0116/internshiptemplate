@@ -1,6 +1,6 @@
 
 // domain/entities/CartItem.kt
-package com.example.foodorderingapp.domain.entities
+package com.example.foodorderingapp_ver2.domain.entities
 
 data class CartItem(
     val product: Product,

@@ -1,9 +1,9 @@
 
 // domain/repositories/CategoryRepository.kt
-package com.example.foodorderingapp.domain.repositories
+package com.example.foodorderingapp_ver2.domain.repositories
 
-import com.example.foodorderingapp.domain.entities.Category
-import com.example.foodorderingapp.domain.common.Result
+import com.example.foodorderingapp_ver2.domain.entities.Category
+import com.example.foodorderingapp_ver2.domain.common.Result
 
 interface CategoryRepository {
     suspend fun getCategories(): Result<List<Category>>

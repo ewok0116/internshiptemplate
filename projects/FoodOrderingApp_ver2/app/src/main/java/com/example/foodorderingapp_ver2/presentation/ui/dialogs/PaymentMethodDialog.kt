@@ -1,6 +1,6 @@
 
 // ui/dialogs/PaymentDialogs.kt
-package com.example.foodorderingapp.ui.dialogs
+package com.example.foodorderingapp_ver2.presentation.ui.dialogs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,9 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.example.foodorderingapp.presentation.viewmodel.FoodOrderingViewModel
-import com.example.foodorderingapp.domain.entities.PaymentMethod
-import com.example.foodorderingapp.ui.theme.LocalAppTheme
+import com.example.foodorderingapp_ver2.presentation.viewmodel.FoodOrderingViewModel
+import com.example.foodorderingapp_ver2.domain.entities.PaymentMethod
+import com.example.foodorderingapp_ver2.presentation.ui.theme.LocalAppTheme
 
 @Composable
 fun PaymentMethodDialog(viewModel: FoodOrderingViewModel) {

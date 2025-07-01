@@ -1,12 +1,12 @@
 
 // data/repositories/CategoryRepositoryImpl.kt - FIXED
-package com.example.foodorderingapp.data.repositories
+package com.example.foodorderingapp_ver2.data.repositories
 
-import com.example.foodorderingapp.domain.entities.Category
-import com.example.foodorderingapp.domain.repositories.CategoryRepository
-import com.example.foodorderingapp.domain.common.Result
-import com.example.foodorderingapp.data.remote.FoodOrderingApiService
-import com.example.foodorderingapp.data.mappers.CategoryMapper
+import com.example.foodorderingapp_ver2.domain.entities.Category
+import com.example.foodorderingapp_ver2.domain.repositories.CategoryRepository
+import com.example.foodorderingapp_ver2.domain.common.Result
+import com.example.foodorderingapp_ver2.data.remote.FoodOrderingApiService
+import com.example.foodorderingapp_ver2.data.mappers.CategoryMapper
 import android.util.Log
 
 class CategoryRepositoryImpl(

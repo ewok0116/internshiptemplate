@@ -1,10 +1,10 @@
 
 // data/repositories/ConnectionRepositoryImpl.kt - FIXED
-package com.example.foodorderingapp.data.repositories
+package com.example.foodorderingapp_ver2.data.repositories
 
-import com.example.foodorderingapp.domain.repositories.ConnectionRepository
-import com.example.foodorderingapp.domain.common.Result
-import com.example.foodorderingapp.data.remote.ApiClient
+import com.example.foodorderingapp_ver2.domain.repositories.ConnectionRepository
+import com.example.foodorderingapp_ver2.domain.common.Result
+import com.example.foodorderingapp_ver2.data.remote.ApiClient
 import android.util.Log
 
 class ConnectionRepositoryImpl : ConnectionRepository {

@@ -1,5 +1,4 @@
-
-
+// presentation/ui/theme/Theme.kt
 package com.example.foodorderingapp_ver2.presentation.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -45,6 +44,3 @@ fun FoodOrderingAppTheme(
         )
     }
 }
-
-
-

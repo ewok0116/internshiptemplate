@@ -1,3 +1,4 @@
+package com.example.foodorderingapp_ver2.domain.entities
 
 data class OrderItem(
     val id: Int,

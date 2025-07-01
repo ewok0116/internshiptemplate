@@ -1,6 +1,6 @@
 
 // domain/common/Result.kt
-package com.example.foodorderingapp.domain.common
+package com.example.foodorderingapp_ver2.domain.common
 
 sealed class Result<out T> {
     data class Success<T>(val data: T) : Result<T>()

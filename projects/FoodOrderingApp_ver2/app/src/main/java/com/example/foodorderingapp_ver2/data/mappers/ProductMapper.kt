@@ -1,9 +1,9 @@
 
 // data/mappers/ProductMapper.kt
-package com.example.foodorderingapp.data.mappers
+package com.example.foodorderingapp_ver2.data.mappers
 
-import com.example.foodorderingapp.domain.entities.Product
-import com.example.foodorderingapp.data.remote.ProductDto
+import com.example.foodorderingapp_ver2.domain.entities.Product
+import com.example.foodorderingapp_ver2.data.remote.ProductDto
 
 object ProductMapper {
     fun mapToDomain(dto: ProductDto): Product {
