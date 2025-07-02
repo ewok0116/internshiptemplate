@@ -10,13 +10,3 @@ enum class PaymentMethod(val displayName: String, val apiValue: String) {
     MULTINET("Multinet", "Multinet"),
     EDENRED("Edenred", "Edenred")
 }
-
-
-enum class OrderStatus {
-    PENDING,
-    CONFIRMED,
-    PREPARING,
-    READY,
-    DELIVERED,
-    CANCELLED
-}

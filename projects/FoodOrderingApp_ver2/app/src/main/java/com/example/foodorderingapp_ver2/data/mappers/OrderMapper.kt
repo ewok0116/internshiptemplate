@@ -14,7 +14,6 @@ object OrderMapper {
             userId = 0, // Not provided in response, could be stored separately
             items = dto.orderItems.map { mapOrderItemToDomain(it) },
             totalAmount = dto.totalAmount,
-            status = mapOrderStatusToDomain(dto.orderStatus),
             paymentMethod = mapPaymentMethodToDomain(dto.paymentMethod),
             deliveryAddress = dto.deliveryAddress,
             orderDate = parseDate(dto.orderDate)
@@ -51,17 +50,6 @@ object OrderMapper {
         )
     }
 
-    private fun mapOrderStatusToDomain(status: String): OrderStatus {
-        return when (status.uppercase()) {
-            "PENDING" -> OrderStatus.PENDING
-            "CONFIRMED" -> OrderStatus.CONFIRMED
-            "PREPARING" -> OrderStatus.PREPARING
-            "READY" -> OrderStatus.READY
-            "DELIVERED" -> OrderStatus.DELIVERED
-            "CANCELLED" -> OrderStatus.CANCELLED
-            else -> OrderStatus.PENDING
-        }
-    }
 
     private fun mapPaymentMethodToDomain(method: String): PaymentMethod {
         return PaymentMethod.values().find { it.apiValue == method }

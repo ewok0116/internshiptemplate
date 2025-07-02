@@ -1,4 +1,3 @@
-
 // ui/dialogs/PaymentDialogs.kt
 package com.example.foodorderingapp_ver2.presentation.ui.dialogs
 
@@ -88,7 +87,7 @@ fun PaymentMethodDialog(viewModel: FoodOrderingViewModel) {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Payment Methods
+                // ALL PAYMENT METHODS - some will succeed, others will fail based on backend logic
                 PaymentMethodOption(
                     emoji = "💳",
                     text = "5168 **** Credit Card",
@@ -253,6 +252,7 @@ fun PaymentProcessingDialog() {
 @Composable
 fun PaymentFailedDialog(viewModel: FoodOrderingViewModel) {
     val theme = LocalAppTheme.current
+    val uiState = viewModel.uiState
 
     Dialog(
         onDismissRequest = { },
@@ -299,12 +299,23 @@ fun PaymentFailedDialog(viewModel: FoodOrderingViewModel) {
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
-                            text = "Failed Payment Try Again",
+                            text = "Payment Failed",
                             color = Color.Black,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
                         )
+
+                        // Show specific error message if available
+                        uiState.errorMessage?.let { errorMessage ->
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = errorMessage,
+                                color = Color.Red,
+                                fontSize = 12.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(20.dp))
 
@@ -317,7 +328,28 @@ fun PaymentFailedDialog(viewModel: FoodOrderingViewModel) {
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Text(
-                                text = "🔄 Retry",
+                                text = "🔄 Try Again",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = {
+                                viewModel.hidePayment()
+                                viewModel.showCart()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Gray
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = "⬅️ Back to Cart",
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp
@@ -336,6 +368,7 @@ fun PaymentSuccessDialog(
     paymentMethod: PaymentMethod = PaymentMethod.CREDIT_CARD
 ) {
     val theme = LocalAppTheme.current
+    val uiState = viewModel.uiState
     var showReceipt by remember { mutableStateOf(false) }
 
     Dialog(
@@ -376,19 +409,52 @@ fun PaymentSuccessDialog(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "🎉 Payment Successful ✅",
+                            text = "🎉 PAYMENT SUCCESSFUL! 🎉",
                             color = Color.White,
-                            fontSize = 16.sp,
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
                         )
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
-                            text = "Your order has been confirmed!",
+                            text = "✅ Your order has been confirmed and saved to database!",
                             color = Color.White,
-                            fontSize = 14.sp
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center
+                        )
+
+                        // Show Order ID if available
+                        uiState.lastOrderId?.let { orderId ->
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "📋 Order ID: #$orderId",
+                                color = Color.White.copy(alpha = 0.9f),
+                                fontSize = 13.sp,
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "💳 Payment method: ${paymentMethod.displayName}",
+                            color = Color.White.copy(alpha = 0.9f),
+                            fontSize = 13.sp,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // FIXED: Use receiptTotal instead of cartTotal
+                        Text(
+                            text = "💰 Total paid: ${String.format("%.2f", uiState.receiptTotal)} TL",
+                            color = Color.White.copy(alpha = 0.9f),
+                            fontSize = 13.sp,
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.Bold
                         )
 
                         Spacer(modifier = Modifier.height(20.dp))
@@ -403,9 +469,9 @@ fun PaymentSuccessDialog(
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Text(
-                                text = "🧾 Show Receipt",
+                                text = "🧾 VIEW RECEIPT",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                                fontSize = 16.sp
                             )
                         }
 

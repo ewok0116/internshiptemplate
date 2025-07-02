@@ -1,5 +1,4 @@
-
-// ui/dialogs/ReceiptDialog.kt
+// ui/dialogs/ReceiptDialog.kt - FIXED TO USE PRESERVED RECEIPT DATA
 package com.example.foodorderingapp_ver2.presentation.ui.dialogs
 
 import androidx.compose.foundation.background
@@ -38,7 +37,10 @@ fun ReceiptDialog(
     val uiState = viewModel.uiState
     val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
     val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-    val total = uiState.cartTotal
+
+    // FIXED: Use receiptItems and receiptTotal instead of cartItems and cartTotal
+    val receiptItems = uiState.receiptItems
+    val total = uiState.receiptTotal
 
     Dialog(onDismissRequest = onDismiss) {
         Box(
@@ -84,7 +86,13 @@ fun ReceiptDialog(
                     // Date and Receipt Number Row
                     ReceiptField("Date:", "$currentDate, $currentTime")
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Show Order ID if available
+                    uiState.lastOrderId?.let { orderId ->
+                        ReceiptField("Order ID:", "#$orderId")
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
 
                     ReceiptField("Amount Received:", "₺${String.format("%.2f", total)}")
 
@@ -138,6 +146,28 @@ fun ReceiptDialog(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // SUCCESS indicator for successful payments
+                    if (uiState.paymentState == com.example.foodorderingapp_ver2.presentation.viewmodel.PaymentStateUi.SUCCESS) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Color.Green.copy(alpha = 0.1f))
+                                .padding(8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "✅ PAYMENT SUCCESSFUL - ORDER SAVED TO DATABASE",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Green,
+                                fontFamily = FontFamily.Monospace,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
                     // Dotted line separator
                     Text(
                         text = "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -",
@@ -163,7 +193,8 @@ fun ReceiptDialog(
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                items(uiState.cartItems) { cartItem ->
+                // FIXED: Use receiptItems instead of uiState.cartItems
+                items(receiptItems) { cartItem ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -228,6 +259,18 @@ fun ReceiptDialog(
                         fontFamily = FontFamily.Monospace,
                         color = Color.Black
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Payment status summary
+                    Text(
+                        text = "Payment Method: ${paymentMethod.displayName}\nStatus: ${if (uiState.paymentState == com.example.foodorderingapp_ver2.presentation.viewmodel.PaymentStateUi.SUCCESS) "COMPLETED" else "PROCESSED"}",
+                        fontSize = 10.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                        fontFamily = FontFamily.Monospace,
+                        color = Color.Gray
+                    )
                 }
             }
         }
@@ -279,4 +322,3 @@ fun PaymentMethodCheckbox(method: String, isChecked: Boolean) {
         )
     }
 }
-                

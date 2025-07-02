@@ -49,6 +49,7 @@ class OrderRepositoryImpl(
         }
     }
 
+    /*
     override suspend fun updateOrderStatus(orderId: Int, status: OrderStatus): Result<Order> {
         return try {
             Log.d("OrderRepository", "Updating order $orderId status to $status")
@@ -89,6 +90,8 @@ class OrderRepositoryImpl(
             Result.Error("Network error: ${e.message}", e)
         }
     }
+
+
 
     override suspend fun cancelOrder(orderId: Int, reason: String): Result<Order> {
         return try {
@@ -133,6 +136,8 @@ class OrderRepositoryImpl(
             Result.Error("Network error: ${e.message}", e)
         }
     }
+
+     */
 
     override suspend fun getOrdersByUser(userId: Int): Result<List<Order>> {
         // This endpoint is not implemented in the current API

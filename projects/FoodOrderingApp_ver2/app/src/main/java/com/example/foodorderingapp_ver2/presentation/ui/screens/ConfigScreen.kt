@@ -1,4 +1,4 @@
-// ConfigScreen.kt - Create this file in your main package
+// presentation/ui/screens/ConfigScreen.kt - Final Version
 package com.example.foodorderingapp_ver2.presentation.ui.screens
 
 import android.content.Context
@@ -17,7 +17,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.foodorderingapp_ver2.presentation.ui.theme.LocalAppTheme
+import com.example.foodorderingapp_ver2.data.repositories.ConnectionRepositoryImpl
+import com.example.foodorderingapp_ver2.domain.usecases.TestConnectionUseCase
+import com.example.foodorderingapp_ver2.domain.usecases.InitializeConnectionUseCase
+import com.example.foodorderingapp_ver2.domain.common.Result
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,14 +30,23 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
     val context = LocalContext.current
     val theme = LocalAppTheme.current
     val sharedPreferences = context.getSharedPreferences("food_app_settings", Context.MODE_PRIVATE)
+    val scope = rememberCoroutineScope()
 
-    // State variables for the 3 input fields
+    // State variables
     var urlText by remember {
         mutableStateOf(sharedPreferences.getString("server_url", "") ?: "")
     }
     var passwordText by remember { mutableStateOf("") }
     var reenterPasswordText by remember { mutableStateOf("") }
     var showSuccessMessage by remember { mutableStateOf(false) }
+    var isTestingConnection by remember { mutableStateOf(false) }
+    var connectionTestResult by remember { mutableStateOf<String?>(null) }
+    var isConnectionSuccessful by remember { mutableStateOf(false) }
+
+    // Create use cases for connection testing
+    val connectionRepository = remember { ConnectionRepositoryImpl() }
+    val testConnectionUseCase = remember { TestConnectionUseCase(connectionRepository) }
+    val initializeConnectionUseCase = remember { InitializeConnectionUseCase(connectionRepository) }
 
     // Show success message for 3 seconds
     LaunchedEffect(showSuccessMessage) {
@@ -112,6 +126,36 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
                 }
             }
 
+            // Connection Test Result
+            connectionTestResult?.let { result ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isConnectionSuccessful) theme.successColor else Color.Red
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isConnectionSuccessful) "✅" else "❌",
+                            fontSize = 20.sp,
+                            modifier = Modifier.padding(end = 12.dp)
+                        )
+                        Text(
+                            text = result,
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+
             // Box 1: Server URL Configuration
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -136,7 +180,12 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
 
                     OutlinedTextField(
                         value = urlText,
-                        onValueChange = { urlText = it },
+                        onValueChange = {
+                            urlText = it
+                            // Clear previous test results when URL changes
+                            connectionTestResult = null
+                            isConnectionSuccessful = false
+                        },
                         label = { Text("Enter Server URL") },
                         placeholder = { Text("https://api.foodapp.com") },
                         modifier = Modifier.fillMaxWidth(),
@@ -150,6 +199,70 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
                             unfocusedLabelColor = theme.textColor.copy(alpha = 0.7f)
                         )
                     )
+
+                    // Initialize Connection Button
+                    Button(
+                        onClick = {
+                            if (urlText.trim().isEmpty()) {
+                                Toast.makeText(context, "Please enter server URL first", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+
+                            scope.launch {
+                                isTestingConnection = true
+                                connectionTestResult = null
+
+                                try {
+                                    // Initialize connection first
+                                    when (val initResult = initializeConnectionUseCase(urlText.trim())) {
+                                        is Result.Success -> {
+                                            // Test the connection to confirm it works
+                                            when (val testResult = testConnectionUseCase()) {
+                                                is Result.Success -> {
+                                                    connectionTestResult = "Connection initialized and tested successfully!"
+                                                    isConnectionSuccessful = true
+                                                }
+                                                is Result.Error -> {
+                                                    connectionTestResult = "Initialization successful but test failed: ${testResult.message}"
+                                                    isConnectionSuccessful = false
+                                                }
+                                                Result.Loading -> {}
+                                            }
+                                        }
+                                        is Result.Error -> {
+                                            connectionTestResult = "Failed to initialize connection: ${initResult.message}"
+                                            isConnectionSuccessful = false
+                                        }
+                                        Result.Loading -> {}
+                                    }
+                                } catch (e: Exception) {
+                                    connectionTestResult = "Connection error: ${e.message}"
+                                    isConnectionSuccessful = false
+                                } finally {
+                                    isTestingConnection = false
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = theme.primaryColor.copy(alpha = 0.8f)
+                        ),
+                        enabled = !isTestingConnection && urlText.trim().isNotEmpty()
+                    ) {
+                        if (isTestingConnection) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                            Text(
+                                text = " Initializing...",
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        } else {
+                            Text("🔗 Initialize Connection")
+                        }
+                    }
 
                     Text(
                         text = "Enter the server URL for food ordering service",
@@ -286,6 +399,9 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
                         urlText.trim().isEmpty() -> {
                             Toast.makeText(context, "Please enter server URL", Toast.LENGTH_SHORT).show()
                         }
+                        !isConnectionSuccessful -> {
+                            Toast.makeText(context, "Please initialize connection first", Toast.LENGTH_SHORT).show()
+                        }
                         passwordText.isEmpty() -> {
                             Toast.makeText(context, "Please enter password", Toast.LENGTH_SHORT).show()
                         }
@@ -296,14 +412,16 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
                             Toast.makeText(context, "Passwords don't match", Toast.LENGTH_SHORT).show()
                         }
                         else -> {
-                            // Save configuration to SharedPreferences
+                            // Save configuration with password
                             with(sharedPreferences.edit()) {
                                 putString("server_url", urlText.trim())
-                                putString("app_password", passwordText) // Note: In real app, encrypt passwords!
+                                putString("app_password", passwordText)
+                                putBoolean("connection_initialized", true) // Mark connection as initialized
                                 putLong("config_updated", System.currentTimeMillis())
                                 apply()
                             }
                             showSuccessMessage = true
+                            Toast.makeText(context, "✅ Configuration and connection saved successfully!", Toast.LENGTH_LONG).show()
                         }
                     }
                 },
@@ -311,7 +429,7 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = theme.primaryColor,
+                    containerColor = if (isConnectionSuccessful) theme.primaryColor else theme.primaryColor.copy(alpha = 0.5f),
                     contentColor = theme.textOnPrimary
                 ),
                 shape = RoundedCornerShape(12.dp)

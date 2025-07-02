@@ -9,7 +9,6 @@ data class Order(
     val userId: Int,
     val items: List<OrderItem>,
     val totalAmount: Double,
-    val status: OrderStatus,
     val paymentMethod: PaymentMethod,
     val deliveryAddress: String,
     val orderDate: Date

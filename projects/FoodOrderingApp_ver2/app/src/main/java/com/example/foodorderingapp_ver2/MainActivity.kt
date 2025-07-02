@@ -1,4 +1,4 @@
-// MainActivity.kt - Updated for new UI structure
+// MainActivity.kt - Final Version
 package com.example.foodorderingapp_ver2
 
 import android.content.Context
@@ -18,12 +18,9 @@ import com.example.foodorderingapp_ver2.presentation.ui.screens.*
 import com.example.foodorderingapp_ver2.presentation.ui.theme.*
 import com.example.foodorderingapp_ver2.presentation.ui.dialogs.*
 import com.example.foodorderingapp_ver2.presentation.di.AppDependencies
-import com.example.foodorderingapp_ver2.presentation.di.FoodOrderingViewModelFactory  // ADD THIS IMPORT
+import com.example.foodorderingapp_ver2.presentation.di.FoodOrderingViewModelFactory
 import com.example.foodorderingapp_ver2.presentation.ui.screens.ConfigScreen
-
 import kotlinx.coroutines.delay
-
-
 
 class MainActivity : ComponentActivity() {
     private lateinit var appDependencies: AppDependencies
@@ -67,19 +64,17 @@ fun FoodOrderingApp(
     onBackToStartup: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val sharedPreferences = context.getSharedPreferences("food_app_settings", Context.MODE_PRIVATE)
-    val serverUrl = sharedPreferences.getString("server_url", "") ?: ""
 
-    // Create ViewModel with dependencies
+    // Create ViewModel with dependencies - ApiClient should already be initialized from StartupScreen
     val viewModel: FoodOrderingViewModel = viewModel(
         factory = FoodOrderingViewModelFactory(
-            getProductsUseCase = appDependencies.getProductsUseCase,
-            getCategoriesUseCase = appDependencies.getCategoriesUseCase,
-            searchProductsUseCase = appDependencies.searchProductsUseCase,
-            getProductsByCategoryUseCase = appDependencies.getProductsByCategoryUseCase,
-            createOrderUseCase = appDependencies.createOrderUseCase,
-            testConnectionUseCase = appDependencies.testConnectionUseCase,
-            initializeConnectionUseCase = appDependencies.initializeConnectionUseCase,
+            getProductsUseCase = appDependencies.getProductsUseCase(),
+            getCategoriesUseCase = appDependencies.getCategoriesUseCase(),
+            searchProductsUseCase = appDependencies.searchProductsUseCase(),
+            getProductsByCategoryUseCase = appDependencies.getProductsByCategoryUseCase(),
+            createOrderUseCase = appDependencies.createOrderUseCase(),
+            testConnectionUseCase = appDependencies.testConnectionUseCase(),
+            initializeConnectionUseCase = appDependencies.initializeConnectionUseCase(),
             onShowToast = { message ->
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
@@ -88,21 +83,13 @@ fun FoodOrderingApp(
 
     val uiState = viewModel.uiState
 
-    // Initialize API connection when entering this screen
-    LaunchedEffect(serverUrl) {
-        if (serverUrl.isNotEmpty()) {
-            viewModel.initializeConnection(serverUrl)
-        } else {
-            Toast.makeText(context, "❌ No database server configured", Toast.LENGTH_LONG).show()
-        }
+    // Load data immediately since connection is already established and tested
+    LaunchedEffect(Unit) {
+        viewModel.loadDataDirectly()
     }
 
     // Handle different loading states
     when {
-        serverUrl.isEmpty() -> {
-            NoServerConfiguredScreen(onBackToStartup = onBackToStartup)
-        }
-
         uiState.loadingState == LoadingStateUi.LOADING -> {
             LoadingScreen()
         }

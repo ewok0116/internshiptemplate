@@ -1,18 +1,10 @@
-
-// presentation/di/ViewModelFactory.kt
+// presentation/di/FoodOrderingViewModelFactory.kt
 package com.example.foodorderingapp_ver2.presentation.di
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.foodorderingapp_ver2.presentation.viewmodel.FoodOrderingViewModel
 import com.example.foodorderingapp_ver2.domain.usecases.*
-import com.example.foodorderingapp_ver2.domain.usecases.CreateOrderUseCase
-import com.example.foodorderingapp_ver2.domain.usecases.GetCategoriesUseCase
-import com.example.foodorderingapp_ver2.domain.usecases.GetProductsByCategoryUseCase
-import com.example.foodorderingapp_ver2.domain.usecases.GetProductsUseCase
-import com.example.foodorderingapp_ver2.domain.usecases.InitializeConnectionUseCase
-import com.example.foodorderingapp_ver2.domain.usecases.SearchProductsUseCase
-import com.example.foodorderingapp_ver2.domain.usecases.TestConnectionUseCase
+import com.example.foodorderingapp_ver2.presentation.viewmodel.FoodOrderingViewModel
 
 class FoodOrderingViewModelFactory(
     private val getProductsUseCase: GetProductsUseCase,
@@ -39,6 +31,6 @@ class FoodOrderingViewModelFactory(
                 onShowToast = onShowToast
             ) as T
         }
-        throw IllegalArgumentException("Unknown ViewModel class")
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }

@@ -47,7 +47,6 @@ data class CreateOrderItemRequestDto(
 
 data class CreateOrderResponseDto(
     @SerializedName("orderId") val orderId: Int,
-    @SerializedName("orderStatus") val orderStatus: String,
     @SerializedName("totalAmount") val totalAmount: Double,
     @SerializedName("orderDate") val orderDate: String,
     @SerializedName("deliveryAddress") val deliveryAddress: String,
@@ -66,32 +65,8 @@ data class OrderItemDto(
     @SerializedName("totalPrice") val totalPrice: Double
 )
 
-data class StatusUpdateRequestDto(
-    @SerializedName("newStatus") val newStatus: String
-)
 
-data class UpdateOrderStatusResponseDto(
-    @SerializedName("success") val success: Boolean,
-    @SerializedName("message") val message: String,
-    @SerializedName("orderId") val orderId: Int? = null,
-    @SerializedName("newStatus") val newStatus: String? = null
-)
 
-data class CancelOrderRequestDto(
-    @SerializedName("orderId") val orderId: Int,
-    @SerializedName("userId") val userId: Int,
-    @SerializedName("reason") val reason: String? = null
-)
-
-data class CancelOrderResponseDto(
-    @SerializedName("orderId") val orderId: Int,
-    @SerializedName("userId") val userId: Int,
-    @SerializedName("reason") val reason: String?,
-    @SerializedName("cancelledAt") val cancelledAt: String,
-    @SerializedName("previousStatus") val previousStatus: String,
-    @SerializedName("success") val success: Boolean,
-    @SerializedName("message") val message: String
-)
 
 data class ConnectionTestResponseDto(
     @SerializedName("message") val message: String,
@@ -113,15 +88,4 @@ interface FoodOrderingApiService {
 
     @POST("api/create-order")
     @Headers("Content-Type: application/json")
-    suspend fun createOrder(@Body request: CreateOrderRequestDto): Response<CreateOrderResponseDto>
-
-    @PUT("api/orders/{orderId}/status")
-    suspend fun updateOrderStatus(
-        @Path("orderId") orderId: Int,
-        @Body request: StatusUpdateRequestDto
-    ): Response<UpdateOrderStatusResponseDto>
-
-    @POST("api/cancel-order")
-    @Headers("Content-Type: application/json")
-    suspend fun cancelOrder(@Body request: CancelOrderRequestDto): Response<CancelOrderResponseDto>
-}
+    suspend fun createOrder(@Body request: CreateOrderRequestDto): Response<CreateOrderResponseDto>}

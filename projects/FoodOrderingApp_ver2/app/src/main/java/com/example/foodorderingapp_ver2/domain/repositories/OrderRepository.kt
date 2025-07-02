@@ -13,7 +13,7 @@ interface OrderRepository {
         paymentMethod: PaymentMethod
     ): Result<Order>
 
-    suspend fun updateOrderStatus(orderId: Int, status: OrderStatus): Result<Order>
-    suspend fun cancelOrder(orderId: Int, reason: String): Result<Order>
+    //suspend fun updateOrderStatus(orderId: Int, status: OrderStatus): Result<Order>
+    //suspend fun cancelOrder(orderId: Int, reason: String): Result<Order>
     suspend fun getOrdersByUser(userId: Int): Result<List<Order>>
 }
