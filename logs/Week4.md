@@ -39,4 +39,22 @@ this. But they should have been imported like:
   - CQS: Commands and queries have seperation in which read and write operations are in the same model. Commands-->Write, Queries-->Read.
   - CQRS: Upgraded CQS. Now the read write operations are seperated (Different models or different DBs)
 
-- In addition, My FoodOrderingApp_ver2 is crashing after I say Connect to DB on StartingPage. Tomorrow, I will debug it and plan to finish the structure of Frontend.   
+- In addition, My FoodOrderingApp_ver2 is crashing after I say Connect to DB on StartingPage. Tomorrow, I will debug it and plan to finish the structure of Frontend.
+
+#Day-17
+
+- Today I continued trying to fix the connection error. When I press the go to homepage button the program was crashing. In the end with some guidance, I learned how to use logcat. Thanks to that, I was able to find the problem. The problem was that I try to establish connection after I try to initialize viewmodel. Moreover, viewmodel needs conenection. so what needs to be done was that on ConfigScreen, it should first establish the connection and after going back to StartScreenpage a feature called test connection can be add and if the test connection returns succesful, then the MainScrollable.kt should be available for usage.
+      - The Test connection was used to show that the connection is established in Config. I was told to get rid of it afterwards.
+  
+- After connection to web service was complete, I tried to Order. Even though the orders were shown in the DB, on Android Studio "Failed Payment" dialog was appearing. Turns out the problem was with my hidePayment method.
+    - This was resetting success to NONE which lead to showing Failed Payment Dialog. In the end, by not resetting success to NONE I was able to obtain the receipt and PaymentSuccess
+fun hidePayment() {
+    uiState = uiState.copy(
+        showPaymentDialog = false,
+        paymentState = PaymentStateUi.NONE  // ❌ Wiped out SUCCESS state
+    )
+}
+
+- Now, since I have a working Frontend. I have 3 things to focus on. First one is adapt vertical slicing to current project. Second one is add encryption, and third is adding eye toggle to password side and get rid of test connection on StartScreen.
+
+
