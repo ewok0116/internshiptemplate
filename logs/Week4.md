@@ -48,10 +48,11 @@ this. But they should have been imported like:
   
 - After connection to web service was complete, I tried to Order. Even though the orders were shown in the DB, on Android Studio "Failed Payment" dialog was appearing. Turns out the problem was with my hidePayment method.
     - This was resetting success to NONE which lead to showing Failed Payment Dialog. In the end, by not resetting success to NONE I was able to obtain the receipt and PaymentSuccess
-fun hidePayment() {
-    uiState = uiState.copy(
-        showPaymentDialog = false,
-        paymentState = PaymentStateUi.NONE  // ❌ Wiped out SUCCESS state
+
+-     fun hidePayment() {
+        uiState = uiState.copy(
+            showPaymentDialog = false,
+            paymentState = PaymentStateUi.NONE  // ❌ Wiped out SUCCESS state
     )
 }
 
