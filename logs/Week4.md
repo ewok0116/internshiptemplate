@@ -58,4 +58,50 @@ this. But they should have been imported like:
 
 - Now, since I have a working Frontend. I have 3 things to focus on. First one is adapt vertical slicing to current project. Second one is add encryption, and third is adding eye toggle to password side and get rid of test connection on StartScreen.
 
+#Day-18
+
+- Today, I had implemented a test connection button to see whether the connection was wortking upon screens. Yesterday, did not have the time to delete that button. Therefore, first thing first, I deleted that button from StartScreen.kt. After that I implemented eye icon in order to see the password.
+
+- Then I had review session and got some advice:
+  - I realized that my password does not stay on the password bar in the config screen therefore I need to implement that specialty.
+  - Another advice was on putting a password before Database Settings page which is ConfigScreen.kt. The password will be custom 1234 or 2025 smt like that.
+  - Another advice was on automatically going back to StartScreen from Config Page at first after that back button will appear.
+  - Lastly, the failed message after probelm with the connection could be a dialog instead of a toast.
+  - I was also informed more about where to implement Encryption.
+    
+- I learned about System Hierarchy and the principles of it.
+    What is System?
+    - Behaviour of entities or parts defines the system and the system can be used to learn more about patterns, and System Theory tries to answer how does the pattern created by the system
+  - Principles of GST (General System Theory): Isomorphism, Dynamics, Holism, Emergence, Boundary, Information and Feedback, Dependence of the parts on the whole, Hierarchy, Organization, Continuity, Adaptation and evolution. with these principles of system it analyses patterns.
+ 
+    In System we have parts and those parts have relationship. This actually what makes the system; system.
+    - Isomorphism: when 2 parts are similar such as planes wing and a birds wing. This is isomorphism.
+    
+    - Dynamic: There is a continuation in system till its creation and that continuation is provided by Dynamic principle. Part should be dynamic so that they can be changed whereas this principle determines that whether that change affected the whole system or not.
+
+    - Continuity: Like it was explained below it means the systems will to keep going.
+   
+    - Organization: We said that parts have relationships. For organization this is what's important. Moreover, a part can have relation with other parts.
+   
+    - Boundary: This defines the limits of each part. If it did not exist, there would not be a reason for multiple parts.
+   
+    - Adaptation and evolution: When there are environmental changes, for surviva; parts should adapt to environment. Those changes and that adaptation process goes into this principle.
+   
+    - Holism: This and emergence are the most core principles. By changing one part, it might affect the whole system or nothing might happen. Holism look into this. It is the concept of seeing the bigger picture.
+   
+    - Emergence: After the change of a part or parts, th eresult from relations also changed. Emergence is 2 or more part relations outcome.
+   
+    - Information and Feedback: this principle is important because in life one of the most necessity is to communicate. Therefore in system parts feedback is also important. It might lead chabnges to be better or worse.
+   
+    - Dependence of the parts on the whole: this principle is paralel with the Dependency Injection in Computer sciences. Parts are dependent to an object. this principle analyses that relation and dependent object etc.
+   
+    - Hierarchy: This principle is similar to what we have in Computer Sciences. The structure or architecture of the program. For example trees etc. This principle analyses the parts relation and whether there is hierarchy between parts. If there is it ties ti define the hierarchy.
+   
+These were the principle of the System Theory. This concept appraoch can be used in many fields. Even in our daily lifes. In addition, like I mentioned; some of the principles are quite similar to what we have in computer sciences.
+
+
+
+
+
+
 
