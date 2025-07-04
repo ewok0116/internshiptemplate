@@ -99,6 +99,20 @@ this. But they should have been imported like:
    
 These were the principle of the System Theory. This concept appraoch can be used in many fields. Even in our daily lifes. In addition, like I mentioned; some of the principles are quite similar to what we have in computer sciences.
 
+#Day-19
+
+- Started the day by implementing the advised security features from yesterday's review session. First priority was adding a password protection dialog before accessing ConfigScreen.kt with a hardcoded password of '1234' to prevent unauthorized configuration changes. 
+
+- Redesigned the program flow to improve first-time user experience. Modified the navigation so that ConfigScreen.kt initially appears without a back button, forcing new users to complete the database setup process.
+
+  After successful connection establishment, the app automatically navigates to MainScrollablePage instead of returning to StartScreen. In addition, After the initial setup is complete, implemented logic so that the back button becomes visible now. Moreover, password and URLs in ConfigPage are now stored in cache so that they do not disappeear after leaving the ConfigScreen, and the error message for failed connection is converted fom toast to card.
+
+- In terms of encryption: Implemented  encryption architecture using AES-256. Selected AES-256-GCM encryption for data values because it generates unique encrypted outputs for each operation, preventing pattern recognition attacks. Chose AES-256-SIV for preference keys to ensure consistent encrypted outputs for reliable data lookup.
+
+  In addition, designed dual storage architecture separating non-sensitive data from encrypted sensitive information. Created "food_app_settings.xml" for regular data (server URLs, connection flags, timestamps) and "food_app_encrypted_settings.xml" for sensitive data (passwords, tokens, credentials). Created ConfigHelper file for these operations and on that used singleton desgin pattern which ensures thread-safe access to encrypted preferences across the entire application and preventing race conditions.
+
+
+
 
 
 
