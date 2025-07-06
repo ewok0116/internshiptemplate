@@ -128,4 +128,7 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    //for encryption
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 }

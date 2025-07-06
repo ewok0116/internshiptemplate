@@ -1,6 +1,6 @@
-// MainActivity.kt - Final Version
+// MainActivity.kt - With Password Protection for Config Screen
 package com.example.foodorderingapp_ver2
-
+//Burda Kaldin
 import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
@@ -20,8 +20,9 @@ import com.example.foodorderingapp_ver2.presentation.ui.dialogs.*
 import com.example.foodorderingapp_ver2.presentation.di.AppDependencies
 import com.example.foodorderingapp_ver2.presentation.di.FoodOrderingViewModelFactory
 import com.example.foodorderingapp_ver2.presentation.ui.screens.ConfigScreen
+import com.example.foodorderingapp_ver2.presentation.ui.dialogs.ConfigPasswordDialog
+import com.example.foodorderingapp_ver2.data.preferences.ConfigHelper
 import kotlinx.coroutines.delay
-
 class MainActivity : ComponentActivity() {
     private lateinit var appDependencies: AppDependencies
 
@@ -37,19 +38,78 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    var currentScreen by remember { mutableStateOf("startup") }
+                    val context = LocalContext.current
+
+                    // Use ConfigHelper for encrypted storage
+                    val configHelper = remember { ConfigHelper.getInstance(context) }
+
+                    // Check if connection has been established before
+                    val hasEstablishedConnection = configHelper.hasEstablishedConnectionOnce()
+
+                    var currentScreen by remember {
+                        mutableStateOf(
+                            if (hasEstablishedConnection) "startup" else "startup_first_time"
+                        )
+                    }
+                    var showPasswordDialog by remember { mutableStateOf(false) }
 
                     when (currentScreen) {
+                        "startup_first_time" -> StartupScreen(
+                            onHomeClick = {
+                                // This should not be called on first time, but just in case
+                                currentScreen = "food_ordering"
+                            },
+                            onConfigClick = {
+                                showPasswordDialog = true
+                            },
+                            isFirstTime = true,
+                            onConnectionEstablished = {
+                                // Save that connection has been established
+                                configHelper.setConnectionEstablishedOnce(true)
+                                // Auto-navigate to food ordering
+                                currentScreen = "food_ordering"
+                            }
+                        )
                         "startup" -> StartupScreen(
                             onHomeClick = { currentScreen = "food_ordering" },
-                            onConfigClick = { currentScreen = "config" }
+                            onConfigClick = {
+                                showPasswordDialog = true
+                            },
+                            isFirstTime = false,
+                            onConnectionEstablished = {
+                                // Already established, just update timestamp
+                                configHelper.setConfigUpdatedTimestamp(System.currentTimeMillis())
+                            }
                         )
                         "food_ordering" -> FoodOrderingApp(
                             appDependencies = appDependencies,
                             onBackToStartup = { currentScreen = "startup" }
                         )
                         "config" -> ConfigScreen(
-                            onBackToStartup = { currentScreen = "startup" }
+                            onBackToStartup = { currentScreen = if (hasEstablishedConnection) "startup" else "startup_first_time" },
+                            onConnectionEstablished = {
+                                // Save that connection has been established
+                                configHelper.setConnectionEstablishedOnce(true)
+                                // If this was first time, auto-navigate to food ordering
+                                if (!hasEstablishedConnection) {
+                                    currentScreen = "food_ordering"
+                                } else {
+                                    currentScreen = "startup"
+                                }
+                            }
+                        )
+                    }
+
+                    // Password Dialog
+                    if (showPasswordDialog) {
+                        ConfigPasswordDialog(
+                            onPasswordCorrect = {
+                                showPasswordDialog = false
+                                currentScreen = "config"
+                            },
+                            onDismiss = {
+                                showPasswordDialog = false
+                            }
                         )
                     }
                 }

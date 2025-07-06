@@ -1,11 +1,16 @@
-// presentation/ui/screens/ConfigScreen.kt - Final Version
+// presentation/ui/screens/ConfigScreen.kt - With Encrypted Storage
 package com.example.foodorderingapp_ver2.presentation.ui.screens
-
+//Burda Kaldin
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.foodorderingapp_ver2.presentation.ui.theme.LocalAppTheme
@@ -21,27 +27,50 @@ import com.example.foodorderingapp_ver2.data.repositories.ConnectionRepositoryIm
 import com.example.foodorderingapp_ver2.domain.usecases.TestConnectionUseCase
 import com.example.foodorderingapp_ver2.domain.usecases.InitializeConnectionUseCase
 import com.example.foodorderingapp_ver2.domain.common.Result
+import com.example.foodorderingapp_ver2.data.preferences.ConfigHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ConfigScreen(onBackToStartup: () -> Unit) {
+fun ConfigScreen(
+    onBackToStartup: () -> Unit,
+    onConnectionEstablished: () -> Unit = {}
+) {
     val context = LocalContext.current
     val theme = LocalAppTheme.current
-    val sharedPreferences = context.getSharedPreferences("food_app_settings", Context.MODE_PRIVATE)
     val scope = rememberCoroutineScope()
 
-    // State variables
-    var urlText by remember {
-        mutableStateOf(sharedPreferences.getString("server_url", "") ?: "")
+    // Use ConfigHelper for encrypted storage
+    val configHelper = remember { ConfigHelper.getInstance(context) }
+
+    // Migrate any existing unencrypted data
+    LaunchedEffect(Unit) {
+        configHelper.migrateToEncryptedStorage(context)
     }
-    var passwordText by remember { mutableStateOf("") }
-    var reenterPasswordText by remember { mutableStateOf("") }
+
+    // Check if this is first time (no previous connection established)
+    val hasEstablishedConnection = configHelper.hasEstablishedConnectionOnce()
+
+    // State for saving process
+    var isSaving by remember { mutableStateOf(false) }
+    var urlText by remember {
+        mutableStateOf(configHelper.getServerUrl() ?: "")
+    }
+    var passwordText by remember {
+        mutableStateOf(configHelper.getAppPassword() ?: "")
+    }
+    var reenterPasswordText by remember {
+        mutableStateOf(configHelper.getAppPassword() ?: "")
+    }
     var showSuccessMessage by remember { mutableStateOf(false) }
     var isTestingConnection by remember { mutableStateOf(false) }
     var connectionTestResult by remember { mutableStateOf<String?>(null) }
     var isConnectionSuccessful by remember { mutableStateOf(false) }
+
+    // Password visibility states
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
 
     // Create use cases for connection testing
     val connectionRepository = remember { ConnectionRepositoryImpl() }
@@ -61,41 +90,95 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
             .fillMaxSize()
             .background(theme.backgroundColor)
     ) {
-        // Top App Bar with Back Button
-        TopAppBar(
-            title = {
-                Text(
-                    text = "⚙️ App Configuration",
-                    fontWeight = FontWeight.Bold,
-                    color = theme.textOnPrimary
-                )
-            },
-            navigationIcon = {
-                Button(
-                    onClick = onBackToStartup,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White.copy(alpha = 0.2f)
-                    )
-                ) {
+        // Top App Bar with Back Button - Only show if connection has been established before
+        if (hasEstablishedConnection) {
+            TopAppBar(
+                title = {
                     Text(
-                        text = "⬅️ Back",
-                        color = Color.White,
-                        fontSize = 14.sp
+                        text = "⚙️ App Configuration",
+                        fontWeight = FontWeight.Bold,
+                        color = theme.textOnPrimary
                     )
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = theme.primaryColor
+                },
+                navigationIcon = {
+                    Button(
+                        onClick = onBackToStartup,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White.copy(alpha = 0.2f)
+                        )
+                    ) {
+                        Text(
+                            text = "⬅️ Back",
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = theme.primaryColor
+                )
             )
-        )
+        } else {
+            // Show title without back button for first time
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "🔐 Secure Setup",
+                        fontWeight = FontWeight.Bold,
+                        color = theme.textOnPrimary
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = theme.primaryColor
+                )
+            )
+        }
 
-        // Main Content
+        // Scrollable Content
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            // First time setup message with security info
+            if (!hasEstablishedConnection) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = theme.primaryColor.copy(alpha = 0.1f)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "🔐",
+                            fontSize = 20.sp,
+                            modifier = Modifier.padding(end = 12.dp)
+                        )
+                        Column {
+                            Text(
+                                text = "Secure Configuration",
+                                color = theme.textColor,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Your credentials will be encrypted and stored securely on this device.",
+                                color = theme.textColor.copy(alpha = 0.7f),
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+            }
+
             // Success Message
             if (showSuccessMessage) {
                 Card(
@@ -117,7 +200,7 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
                             modifier = Modifier.padding(end = 12.dp)
                         )
                         Text(
-                            text = "Configuration saved successfully!",
+                            text = "Configuration saved securely!",
                             color = Color.White,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium
@@ -182,7 +265,7 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
                         value = urlText,
                         onValueChange = {
                             urlText = it
-                            // Clear previous test results when URL changes
+                            // Clear previous test results when URL changes, but keep the URL value
                             connectionTestResult = null
                             isConnectionSuccessful = false
                         },
@@ -196,83 +279,20 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
                             focusedTextColor = theme.textColor,
                             unfocusedTextColor = theme.textColor,
                             unfocusedBorderColor = theme.textColor.copy(alpha = 0.5f),
-                            unfocusedLabelColor = theme.textColor.copy(alpha = 0.7f)
+                            unfocusedLabelColor = theme.textColor.copy(alpha = 0.7f),
+                            cursorColor = theme.primaryColor
                         )
                     )
 
-                    // Initialize Connection Button
-                    Button(
-                        onClick = {
-                            if (urlText.trim().isEmpty()) {
-                                Toast.makeText(context, "Please enter server URL first", Toast.LENGTH_SHORT).show()
-                                return@Button
-                            }
-
-                            scope.launch {
-                                isTestingConnection = true
-                                connectionTestResult = null
-
-                                try {
-                                    // Initialize connection first
-                                    when (val initResult = initializeConnectionUseCase(urlText.trim())) {
-                                        is Result.Success -> {
-                                            // Test the connection to confirm it works
-                                            when (val testResult = testConnectionUseCase()) {
-                                                is Result.Success -> {
-                                                    connectionTestResult = "Connection initialized and tested successfully!"
-                                                    isConnectionSuccessful = true
-                                                }
-                                                is Result.Error -> {
-                                                    connectionTestResult = "Initialization successful but test failed: ${testResult.message}"
-                                                    isConnectionSuccessful = false
-                                                }
-                                                Result.Loading -> {}
-                                            }
-                                        }
-                                        is Result.Error -> {
-                                            connectionTestResult = "Failed to initialize connection: ${initResult.message}"
-                                            isConnectionSuccessful = false
-                                        }
-                                        Result.Loading -> {}
-                                    }
-                                } catch (e: Exception) {
-                                    connectionTestResult = "Connection error: ${e.message}"
-                                    isConnectionSuccessful = false
-                                } finally {
-                                    isTestingConnection = false
-                                }
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = theme.primaryColor.copy(alpha = 0.8f)
-                        ),
-                        enabled = !isTestingConnection && urlText.trim().isNotEmpty()
-                    ) {
-                        if (isTestingConnection) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp
-                            )
-                            Text(
-                                text = " Initializing...",
-                                modifier = Modifier.padding(start = 8.dp)
-                            )
-                        } else {
-                            Text("🔗 Initialize Connection")
-                        }
-                    }
-
                     Text(
-                        text = "Enter the server URL for food ordering service",
+                        text = "Enter the server URL for food ordering service. Connection will be tested when you save.",
                         fontSize = 12.sp,
                         color = theme.textColor.copy(alpha = 0.6f)
                     )
                 }
             }
 
-            // Box 2: Password
+            // Box 2: Password (Encrypted)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -287,12 +307,29 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
                         .padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(
-                        text = "🔒 Password",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = theme.textColor
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "🔒 Password",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = theme.textColor
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "🔐 Encrypted",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = theme.primaryColor,
+                            modifier = Modifier
+                                .background(
+                                    theme.primaryColor.copy(alpha = 0.1f),
+                                    RoundedCornerShape(4.dp)
+                                )
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
 
                     OutlinedTextField(
                         value = passwordText,
@@ -300,26 +337,36 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
                         label = { Text("Enter Password") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(
+                                    imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                                    tint = theme.textColor.copy(alpha = 0.6f)
+                                )
+                            }
+                        },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = theme.primaryColor,
                             focusedLabelColor = theme.primaryColor,
                             focusedTextColor = theme.textColor,
                             unfocusedTextColor = theme.textColor,
                             unfocusedBorderColor = theme.textColor.copy(alpha = 0.5f),
-                            unfocusedLabelColor = theme.textColor.copy(alpha = 0.7f)
+                            unfocusedLabelColor = theme.textColor.copy(alpha = 0.7f),
+                            cursorColor = theme.primaryColor
                         )
                     )
 
                     Text(
-                        text = "Password for authentication",
+                        text = "Password for authentication (encrypted storage)",
                         fontSize = 12.sp,
                         color = theme.textColor.copy(alpha = 0.6f)
                     )
                 }
             }
 
-            // Box 3: Re-enter Password
+            // Box 3: Re-enter Password (Encrypted)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -334,12 +381,29 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
                         .padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(
-                        text = "🔑 Confirm Password",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = theme.textColor
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "🔑 Confirm Password",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = theme.textColor
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "🔐 Encrypted",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = theme.primaryColor,
+                            modifier = Modifier
+                                .background(
+                                    theme.primaryColor.copy(alpha = 0.1f),
+                                    RoundedCornerShape(4.dp)
+                                )
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
 
                     OutlinedTextField(
                         value = reenterPasswordText,
@@ -347,14 +411,24 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
                         label = { Text("Re-enter Password") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password",
+                                    tint = theme.textColor.copy(alpha = 0.6f)
+                                )
+                            }
+                        },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = theme.primaryColor,
                             focusedLabelColor = theme.primaryColor,
                             focusedTextColor = theme.textColor,
                             unfocusedTextColor = theme.textColor,
                             unfocusedBorderColor = theme.textColor.copy(alpha = 0.5f),
-                            unfocusedLabelColor = theme.textColor.copy(alpha = 0.7f)
+                            unfocusedLabelColor = theme.textColor.copy(alpha = 0.7f),
+                            cursorColor = theme.primaryColor
                         )
                     )
 
@@ -390,17 +464,15 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            // Add some bottom spacing before the save button
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // Save Button
+            // Save Configuration Button - Does Everything in One Step
             Button(
                 onClick = {
                     when {
                         urlText.trim().isEmpty() -> {
                             Toast.makeText(context, "Please enter server URL", Toast.LENGTH_SHORT).show()
-                        }
-                        !isConnectionSuccessful -> {
-                            Toast.makeText(context, "Please initialize connection first", Toast.LENGTH_SHORT).show()
                         }
                         passwordText.isEmpty() -> {
                             Toast.makeText(context, "Please enter password", Toast.LENGTH_SHORT).show()
@@ -412,34 +484,98 @@ fun ConfigScreen(onBackToStartup: () -> Unit) {
                             Toast.makeText(context, "Passwords don't match", Toast.LENGTH_SHORT).show()
                         }
                         else -> {
-                            // Save configuration with password
-                            with(sharedPreferences.edit()) {
-                                putString("server_url", urlText.trim())
-                                putString("app_password", passwordText)
-                                putBoolean("connection_initialized", true) // Mark connection as initialized
-                                putLong("config_updated", System.currentTimeMillis())
-                                apply()
+                            // Do everything in one step: Initialize connection + Save configuration securely
+                            scope.launch {
+                                isSaving = true
+                                connectionTestResult = null
+
+                                try {
+                                    // Step 1: Initialize connection
+                                    when (val initResult = initializeConnectionUseCase(urlText.trim())) {
+                                        is Result.Success -> {
+                                            // Step 2: Test the connection
+                                            when (val testResult = testConnectionUseCase()) {
+                                                is Result.Success -> {
+                                                    // Step 3: Save everything if connection works (using encrypted storage)
+                                                    configHelper.saveCompleteConfiguration(
+                                                        serverUrl = urlText.trim(),
+                                                        password = passwordText
+                                                    )
+
+                                                    connectionTestResult = "Connection Established"
+                                                    isConnectionSuccessful = true
+                                                    showSuccessMessage = true
+                                                    Toast.makeText(context, "✅ Configuration saved securely!", Toast.LENGTH_LONG).show()
+
+                                                    // Don't clear the fields - keep URL and password visible
+                                                    // Trigger connection established callback
+                                                    onConnectionEstablished()
+                                                }
+                                                is Result.Error -> {
+                                                    connectionTestResult = "❌ Connection test failed: ${testResult.message}"
+                                                    isConnectionSuccessful = false
+                                                    Toast.makeText(context, "❌ Connection failed: ${testResult.message}", Toast.LENGTH_LONG).show()
+                                                    // Keep URL and password fields filled even on failure
+                                                }
+                                                Result.Loading -> {}
+                                            }
+                                        }
+                                        is Result.Error -> {
+                                            connectionTestResult = "❌ Failed to initialize connection: ${initResult.message}"
+                                            isConnectionSuccessful = false
+                                            Toast.makeText(context, "❌ Connection failed: ${initResult.message}", Toast.LENGTH_LONG).show()
+                                            // Keep URL and password fields filled even on failure
+                                        }
+                                        Result.Loading -> {}
+                                    }
+                                } catch (e: Exception) {
+                                    connectionTestResult = "❌ Connection error: ${e.message}"
+                                    isConnectionSuccessful = false
+                                    Toast.makeText(context, "❌ Connection error: ${e.message}", Toast.LENGTH_LONG).show()
+                                    // Keep URL and password fields filled even on error
+                                } finally {
+                                    isSaving = false
+                                }
                             }
-                            showSuccessMessage = true
-                            Toast.makeText(context, "✅ Configuration and connection saved successfully!", Toast.LENGTH_LONG).show()
                         }
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
+                    .height(60.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isConnectionSuccessful) theme.primaryColor else theme.primaryColor.copy(alpha = 0.5f),
+                    containerColor = if (urlText.trim().isNotEmpty() && passwordText.isNotEmpty() && reenterPasswordText.isNotEmpty() && passwordText == reenterPasswordText)
+                        theme.primaryColor
+                    else
+                        theme.primaryColor.copy(alpha = 0.5f),
                     contentColor = theme.textOnPrimary
                 ),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                enabled = !isSaving
             ) {
-                Text(
-                    text = "💾 Save Configuration",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                    Text(
+                        text = " Saving & Testing Connection...",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                } else {
+                    Text(
+                        text = if (!hasEstablishedConnection) "🔐 Setup & Launch App" else "🔐 Save Secure Configuration",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
+
+            // Add bottom padding to ensure button is always visible
+            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }
