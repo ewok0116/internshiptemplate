@@ -3,68 +3,91 @@ package com.example.foodorderingapp_ver2.data.preferences
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
+import java.security.GeneralSecurityException
+import java.io.IOException
 
 class ConfigHelper private constructor(context: Context) {
 
     companion object : SingletonHolder<ConfigHelper, Context>(::ConfigHelper) {
-        private const val PREFS_NAME = "food_app_settings"
         private const val ENCRYPTED_PREFS_NAME = "food_app_encrypted_settings"
 
-        // Regular preferences keys (non-sensitive data)
+        // All preferences keys (now all encrypted)
         private const val KEY_CONNECTION_INITIALIZED = "connection_initialized"
         private const val KEY_CONFIG_UPDATED = "config_updated"
         private const val KEY_CONNECTION_ESTABLISHED_ONCE = "connection_established_once"
         private const val KEY_SERVER_URL = "server_url"
-
-        // Encrypted preferences keys (sensitive data)
         private const val KEY_APP_PASSWORD = "app_password"
         private const val KEY_TOKEN = "token"
         private const val KEY_API_KEY = "api_key"
         private const val KEY_USER_CREDENTIALS = "user_credentials"
     }
 
-    // Regular SharedPreferences for non-sensitive data
-    private val regularPreferences: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    // Single encrypted SharedPreferences instance
+    private val encryptedSharedPreferences: SharedPreferences by lazy {
+        createEncryptedSharedPreferences(context)
+    }
 
-    // For now, using regular SharedPreferences for both (you can add encryption later)
-    // This avoids dependency issues while keeping the same API
-    private val encryptedSharedPreferences: SharedPreferences = context.getSharedPreferences(ENCRYPTED_PREFS_NAME, Context.MODE_PRIVATE)
+    private fun createEncryptedSharedPreferences(context: Context): SharedPreferences {
+        return try {
+            // Create or retrieve the master key for encryption
+            val masterKey = MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
 
-    // ========== REGULAR (NON-SENSITIVE) DATA ==========
+            // Create encrypted shared preferences
+            EncryptedSharedPreferences.create(
+                context,
+                ENCRYPTED_PREFS_NAME,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: GeneralSecurityException) {
+            throw RuntimeException("Failed to create encrypted preferences", e)
+        } catch (e: IOException) {
+            throw RuntimeException("Failed to create encrypted preferences", e)
+        }
+    }
+
+    // ========== SERVER CONFIGURATION ==========
 
     fun getServerUrl(): String? {
-        return regularPreferences.getString(KEY_SERVER_URL, "")
+        return encryptedSharedPreferences.getString(KEY_SERVER_URL, "")
     }
 
     fun setServerUrl(value: String?) {
-        regularPreferences.edit().putString(KEY_SERVER_URL, value).apply()
+        encryptedSharedPreferences.edit().putString(KEY_SERVER_URL, value).apply()
     }
 
+    // ========== CONNECTION STATE ==========
+
     fun isConnectionInitialized(): Boolean {
-        return regularPreferences.getBoolean(KEY_CONNECTION_INITIALIZED, false)
+        return encryptedSharedPreferences.getBoolean(KEY_CONNECTION_INITIALIZED, false)
     }
 
     fun setConnectionInitialized(value: Boolean) {
-        regularPreferences.edit().putBoolean(KEY_CONNECTION_INITIALIZED, value).apply()
+        encryptedSharedPreferences.edit().putBoolean(KEY_CONNECTION_INITIALIZED, value).apply()
     }
 
     fun hasEstablishedConnectionOnce(): Boolean {
-        return regularPreferences.getBoolean(KEY_CONNECTION_ESTABLISHED_ONCE, false)
+        return encryptedSharedPreferences.getBoolean(KEY_CONNECTION_ESTABLISHED_ONCE, false)
     }
 
     fun setConnectionEstablishedOnce(value: Boolean) {
-        regularPreferences.edit().putBoolean(KEY_CONNECTION_ESTABLISHED_ONCE, value).apply()
+        encryptedSharedPreferences.edit().putBoolean(KEY_CONNECTION_ESTABLISHED_ONCE, value).apply()
     }
 
     fun getConfigUpdatedTimestamp(): Long {
-        return regularPreferences.getLong(KEY_CONFIG_UPDATED, 0L)
+        return encryptedSharedPreferences.getLong(KEY_CONFIG_UPDATED, 0L)
     }
 
     fun setConfigUpdatedTimestamp(value: Long) {
-        regularPreferences.edit().putLong(KEY_CONFIG_UPDATED, value).apply()
+        encryptedSharedPreferences.edit().putLong(KEY_CONFIG_UPDATED, value).apply()
     }
 
-    // ========== ENCRYPTED (SENSITIVE) DATA ==========
+    // ========== AUTHENTICATION DATA ==========
 
     fun getAppPassword(): String? {
         return encryptedSharedPreferences.getString(KEY_APP_PASSWORD, "")
@@ -109,40 +132,78 @@ class ConfigHelper private constructor(context: Context) {
     }
 
     fun saveCompleteConfiguration(serverUrl: String, password: String) {
-        // Save non-sensitive data to regular preferences
+        // Save all data to encrypted preferences
         setServerUrl(serverUrl)
-        setConnectionInitialized(true)
-        setConfigUpdatedTimestamp(System.currentTimeMillis())
-
-        // Save sensitive data to encrypted preferences
         setAppPassword(password)
+        setConnectionInitialized(true)
+        setConnectionEstablishedOnce(true)
+        setConfigUpdatedTimestamp(System.currentTimeMillis())
     }
 
     fun clearAllData() {
-        // Clear regular preferences
-        regularPreferences.edit().clear().apply()
-
-        // Clear encrypted preferences
+        // Clear all encrypted preferences
         encryptedSharedPreferences.edit().clear().apply()
     }
 
     fun clearSensitiveData() {
-        // Only clear encrypted preferences (keep server URL and other non-sensitive settings)
-        encryptedSharedPreferences.edit().clear().apply()
+        // Clear only authentication-related data
+        encryptedSharedPreferences.edit().apply {
+            remove(KEY_APP_PASSWORD)
+            remove(KEY_TOKEN)
+            remove(KEY_API_KEY)
+            remove(KEY_USER_CREDENTIALS)
+        }.apply()
     }
 
     // Migration method to move existing unencrypted data to encrypted storage
     fun migrateToEncryptedStorage(context: Context) {
-        val oldPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        try {
+            // Check if old unencrypted preferences exist
+            val oldPrefs = context.getSharedPreferences("food_app_settings", Context.MODE_PRIVATE)
 
-        // Check if there's an unencrypted password that needs migration
-        val oldPassword = oldPrefs.getString("app_password", null)
-        if (!oldPassword.isNullOrEmpty() && getAppPassword().isNullOrEmpty()) {
-            // Migrate password to encrypted storage
-            setAppPassword(oldPassword)
+            if (oldPrefs.all.isNotEmpty()) {
+                // Migrate data from old preferences to encrypted storage
+                val editor = encryptedSharedPreferences.edit()
 
-            // Remove from old unencrypted storage
-            oldPrefs.edit().remove("app_password").apply()
+                // Migrate all existing data
+                oldPrefs.all.forEach { (key, value) ->
+                    when (value) {
+                        is String -> editor.putString(key, value)
+                        is Boolean -> editor.putBoolean(key, value)
+                        is Long -> editor.putLong(key, value)
+                        is Int -> editor.putInt(key, value)
+                        is Float -> editor.putFloat(key, value)
+                    }
+                }
+
+                // Apply changes
+                editor.apply()
+
+                // Clear old unencrypted preferences
+                oldPrefs.edit().clear().apply()
+            }
+        } catch (e: Exception) {
+            // Handle migration errors gracefully
+            e.printStackTrace()
+        }
+    }
+
+    // Check if encrypted preferences are working
+    fun testEncryption(): Boolean {
+        return try {
+            val testKey = "test_encryption_key"
+            val testValue = "test_value_${System.currentTimeMillis()}"
+
+            // Try to write and read
+            encryptedSharedPreferences.edit().putString(testKey, testValue).apply()
+            val retrievedValue = encryptedSharedPreferences.getString(testKey, null)
+
+            // Clean up test data
+            encryptedSharedPreferences.edit().remove(testKey).apply()
+
+            retrievedValue == testValue
+        } catch (e: Exception) {
+            false
         }
     }
 }
