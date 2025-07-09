@@ -24,7 +24,7 @@ import com.example.foodorderingapp_ver2.presentation.ui.dialogs.ConfigPasswordDi
 import com.example.foodorderingapp_ver2.data.preferences.ConfigHelper
 import kotlinx.coroutines.delay
 class MainActivity : ComponentActivity() {
-    private lateinit var appDependencies: AppDependencies
+    private lateinit var appDependencies: AppDependencies // lateinit means "I promise to initialize this before using it"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,6 +42,10 @@ class MainActivity : ComponentActivity() {
 
                     // Use ConfigHelper for encrypted storage
                     val configHelper = remember { ConfigHelper.getInstance(context) }
+
+                    /*ConfigHelper.getInstance(context) creates or gets a singleton instance for managing encrypted storage
+                    remember ensures this expensive object is only created once (not on every UI refresh)
+                    ConfigHelper handles saving/loading encrypted configuration data (like database settings)*/
 
                     // Check if connection has been established before
                     val hasEstablishedConnection = configHelper.hasEstablishedConnectionOnce()

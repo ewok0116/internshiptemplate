@@ -1,15 +1,12 @@
 // presentation/viewmodel/ConnectionManager.kt
 package com.example.foodorderingapp_ver2.presentation.viewmodel
 
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import android.util.Log
-import com.example.foodorderingapp_ver2.domain.entities.*
 import com.example.foodorderingapp_ver2.domain.usecases.*
 import com.example.foodorderingapp_ver2.domain.common.Result
-import com.example.foodorderingapp_ver2.presentation.viewmodel.FoodOrderingUiState
-import com.example.foodorderingapp_ver2.presentation.viewmodel.LoadingStateUi
+
 
 class ConnectionManager(
     private val initializeConnectionUseCase: InitializeConnectionUseCase,
