@@ -119,6 +119,17 @@ LaunchedEffect(searchText, selectedCategoryId, uiState.products) {
 - I changed how the data was gathered. I had both GetDataByCategory and loadAllData I got rid of GetDataByCategory this one and now the selection of category is also made in the Frontend part. In other words, I do not connect to web service and load data each time I want to filter.
 - I started making a Figma model to have another demo presentation. Just in case.
 
+#Day 23
+
+
+# Day 23 – Presentation Day
+
+- Today, I realised that the dialog for the ConfigPassword should have taken the password I created, and it should appear after the first connection. Therefore, I changed the flow of the program on MainActivity. In addition, updated ConfigScreen and ConfigHelper. So that now the password on ConfigPasswordDialog is the one I enter at the ConfigScreen. In addition, if there is an error, the password is 1234. This is only the case if an error occurs while writing the password!!!
+- I did my Demo and Presentation todat. It was great. I'am quite happy with the result. If I could have done unit testing though I would have been thrilled.
+- I also created a wiki.
+Since I'am not doing much with coding there is not much detail to tell. That's why this week my daily and logs are quite similar.
+
+
 
 
 
