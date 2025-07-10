@@ -497,6 +497,7 @@ fun ConfigScreen(
                                             when (val testResult = testConnectionUseCase()) {
                                                 is Result.Success -> {
                                                     // Step 3: Save everything if connection works (using encrypted storage)
+                                                    // This saves the password that ConfigPasswordDialog will use
                                                     configHelper.saveCompleteConfiguration(
                                                         serverUrl = urlText.trim(),
                                                         password = passwordText

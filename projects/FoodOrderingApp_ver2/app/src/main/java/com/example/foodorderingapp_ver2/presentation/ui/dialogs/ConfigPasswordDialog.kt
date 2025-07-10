@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -18,16 +19,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.foodorderingapp_ver2.presentation.ui.theme.LocalAppTheme
+import com.example.foodorderingapp_ver2.data.preferences.ConfigHelper
 
 @Composable
 fun ConfigPasswordDialog(
     onPasswordCorrect: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     val theme = LocalAppTheme.current
+    val configHelper = remember { ConfigHelper.getInstance(context) }
+
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf(false) }
+
+    // Get the stored password from ConfigHelper (the password entered in ConfigScreen)
+    val storedPassword = configHelper.getAppPassword() ?: "1234"
 
     // Clear error when user types
     LaunchedEffect(password) {
@@ -112,7 +120,8 @@ fun ConfigPasswordDialog(
 
                     Button(
                         onClick = {
-                            if (password == "1234") {
+                            // ONLY CHANGE: Use stored password instead of hardcoded "1234"
+                            if (password == storedPassword) {
                                 onPasswordCorrect()
                             } else {
                                 showError = true

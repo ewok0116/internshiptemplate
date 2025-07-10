@@ -1,4 +1,3 @@
-
 // ui/screens/MainScrollablePage.kt
 package com.example.foodorderingapp_ver2.presentation.ui.screens
 
@@ -38,30 +37,33 @@ fun MainScrollablePage(
     val uiState = viewModel.uiState
     var searchText by remember { mutableStateOf("") }
     var selectedCategoryId by remember { mutableStateOf<Int?>(null) }
-    var filteredProducts by remember { mutableStateOf(uiState.products) }
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Update filtered products when search text or category changes
-    LaunchedEffect(searchText, selectedCategoryId, uiState.products) {
-        if (selectedCategoryId != null) {
-            viewModel.getProductsByCategory(selectedCategoryId!!) { products ->
-                filteredProducts = if (searchText.isNotBlank()) {
-                    products.filter {
-                        it.name.contains(searchText, ignoreCase = true) ||
-                                it.description.contains(searchText, ignoreCase = true)
-                    }
-                } else {
-                    products
-                }
+    // FIXED: Filter products in memory, no API calls!
+    val filteredProducts = remember(searchText, selectedCategoryId, uiState.products) {
+        val productsToFilter = if (selectedCategoryId != null) {
+            // Filter by category in memory
+            uiState.products.filter { it.categoryId == selectedCategoryId }
+        } else {
+            // Show all products
+            uiState.products
+        }
+
+        if (searchText.isNotBlank()) {
+            // Filter by search text in memory
+            productsToFilter.filter {
+                it.name.contains(searchText, ignoreCase = true) ||
+                        it.description.contains(searchText, ignoreCase = true)
             }
         } else {
-            viewModel.searchProducts(searchText) { products ->
-                filteredProducts = products
-            }
+            productsToFilter
         }
     }
+
+    // REMOVED: The LaunchedEffect that was calling API repeatedly!
+    // LaunchedEffect(searchText, selectedCategoryId, uiState.products) { ... } // DELETED!
 
     LaunchedEffect(showSnackbar) {
         if (showSnackbar) {
@@ -165,6 +167,7 @@ fun MainScrollablePage(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // FIXED: Use filteredProducts directly, no API calls!
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {

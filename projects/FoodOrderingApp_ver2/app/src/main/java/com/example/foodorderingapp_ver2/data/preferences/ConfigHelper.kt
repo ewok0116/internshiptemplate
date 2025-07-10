@@ -95,6 +95,8 @@ class ConfigHelper private constructor(context: Context) {
 
     fun setAppPassword(value: String?) {
         encryptedSharedPreferences.edit().putString(KEY_APP_PASSWORD, value).apply()
+        // Update timestamp when password is changed
+        setConfigUpdatedTimestamp(System.currentTimeMillis())
     }
 
     fun getToken(): String? {
@@ -137,6 +139,12 @@ class ConfigHelper private constructor(context: Context) {
         setAppPassword(password)
         setConnectionInitialized(true)
         setConnectionEstablishedOnce(true)
+        setConfigUpdatedTimestamp(System.currentTimeMillis())
+    }
+
+    fun updatePasswordOnly(newPassword: String) {
+        // Update only the password and timestamp, keep everything else
+        setAppPassword(newPassword)
         setConfigUpdatedTimestamp(System.currentTimeMillis())
     }
 
@@ -205,6 +213,18 @@ class ConfigHelper private constructor(context: Context) {
         } catch (e: Exception) {
             false
         }
+    }
+
+    // Check if password has been set
+    fun hasPasswordBeenSet(): Boolean {
+        val password = getAppPassword()
+        return !password.isNullOrEmpty()
+    }
+
+    // Verify password matches stored password
+    fun verifyPassword(inputPassword: String): Boolean {
+        val storedPassword = getAppPassword()
+        return inputPassword == storedPassword
     }
 }
 
