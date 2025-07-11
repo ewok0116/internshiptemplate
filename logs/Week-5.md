@@ -121,13 +121,16 @@ LaunchedEffect(searchText, selectedCategoryId, uiState.products) {
 
 #Day 23
 
-
-# Day 23 – Presentation Day
-
 - Today, I realised that the dialog for the ConfigPassword should have taken the password I created, and it should appear after the first connection. Therefore, I changed the flow of the program on MainActivity. In addition, updated ConfigScreen and ConfigHelper. So that now the password on ConfigPasswordDialog is the one I enter at the ConfigScreen. In addition, if there is an error, the password is 1234. This is only the case if an error occurs while writing the password!!!
 - I did my Demo and Presentation todat. It was great. I'am quite happy with the result. If I could have done unit testing though I would have been thrilled.
 - I also created a wiki.
 Since I'am not doing much with coding there is not much detail to tell. That's why this week my daily and logs are quite similar.
+
+#Day 24
+
+- This is the final day of my internship. I've only uploaded Postman Collection and finished writing the reports (Turkish and English). In addition, there were some unused files in Backend side. I fixed that. Moreover, Even though I got rid of 'OrderStatus' it still appeared in some places in Backend therefore I had to find and deleted them. After that I uploaded all to GitHub. The END.
+
+
 
 
 
