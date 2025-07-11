@@ -131,45 +131,7 @@ namespace MyFoodOrderingAPI.WebAPI.Controllers.Orders
             }
         }
 
-        /// <summary>
-        /// Get orders by status
-        /// </summary>
-        [HttpGet("status/{status}")]
-        public async Task<IActionResult> GetOrdersByStatus(string status, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(status))
-                {
-                    return BadRequest(new { error = "Status is required" });
-                }
-
-                var query = new GetOrdersQuery 
-                { 
-                    Status = status,
-                    PageNumber = pageNumber,
-                    PageSize = pageSize
-                };
-                var response = await _mediator.Send(query);
-
-                if (response.Success)
-                {
-                    return Ok(response);
-                }
-                else
-                {
-                    return BadRequest(new { error = response.Message });
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Exception in GetOrdersByStatus for status {Status}", status);
-                return StatusCode(500, new { 
-                    error = "Internal server error", 
-                    details = ex.Message 
-                });
-            }
-        }
+    
 
         /// <summary>
         /// Health check

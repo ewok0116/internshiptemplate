@@ -3,7 +3,6 @@ namespace MyFoodOrderingAPI.Core.Models
     public class OrderFilter
     {
         public int? UserId { get; set; }
-        public string? OrderStatus { get; set; }
         public DateTime? OrderDateFrom { get; set; }
         public DateTime? OrderDateTo { get; set; }
         public decimal? MinAmount { get; set; }

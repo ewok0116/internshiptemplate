@@ -77,7 +77,7 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
             using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync(cancellationToken);
             
-            var sql = "SELECT OID, UID, OrderStatus, TotalAmount, DeliveryAddress, OrderDate, PaymentMethod FROM Orders WHERE OID = @Id";
+            var sql = "SELECT OID, UID, TotalAmount, DeliveryAddress, OrderDate, PaymentMethod FROM Orders WHERE OID = @Id";
             using var command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@Id", id);
 
@@ -179,7 +179,7 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
             await connection.OpenAsync(cancellationToken);
             
             var sql = @"UPDATE Orders 
-                       SET OrderStatus = @OrderStatus, TotalAmount = @TotalAmount, 
+                       SET TotalAmount = @TotalAmount, 
                            DeliveryAddress = @DeliveryAddress, PaymentMethod = @PaymentMethod 
                        WHERE OID = @Id";
             using var command = new SqlCommand(sql, connection);
@@ -223,11 +223,7 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
             return Convert.ToInt32(result);
         }
 
-        public async Task<List<Order>> GetOrdersByStatusAsync(string status, CancellationToken cancellationToken = default)
-        {
-            var filter = new OrderFilter { OrderStatus = status };
-            return await GetOrdersAsync(filter, cancellationToken);
-        }
+    
 
         public async Task<List<Order>> GetOrdersByDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
         {
@@ -240,7 +236,7 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
             var conditions = new List<string>();
             var parameters = new Dictionary<string, object>();
 
-            var sql = "SELECT OID, UID, OrderStatus, TotalAmount, DeliveryAddress, OrderDate, PaymentMethod FROM Orders";
+            var sql = "SELECT OID, UID, TotalAmount, DeliveryAddress, OrderDate, PaymentMethod FROM Orders";
 
             if (filter.UserId.HasValue)
             {
@@ -248,11 +244,7 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
                 parameters["@UserId"] = filter.UserId.Value;
             }
 
-            if (!string.IsNullOrWhiteSpace(filter.OrderStatus))
-            {
-                conditions.Add("OrderStatus = @OrderStatus");
-                parameters["@OrderStatus"] = filter.OrderStatus;
-            }
+         
 
             if (filter.OrderDateFrom.HasValue)
             {
@@ -316,11 +308,7 @@ namespace MyFoodOrderingAPI.Infrastructure.Repositories
                 parameters["@UserId"] = filter.UserId.Value;
             }
 
-            if (!string.IsNullOrWhiteSpace(filter.OrderStatus))
-            {
-                conditions.Add("OrderStatus = @OrderStatus");
-                parameters["@OrderStatus"] = filter.OrderStatus;
-            }
+        
 
             if (filter.OrderDateFrom.HasValue)
             {

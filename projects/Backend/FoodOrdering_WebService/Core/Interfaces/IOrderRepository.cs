@@ -13,7 +13,6 @@ namespace MyFoodOrderingAPI.Core.Interfaces
         Task<Order> UpdateOrderAsync(Order order, CancellationToken cancellationToken = default);
         Task<bool> DeleteOrderAsync(int id, CancellationToken cancellationToken = default);
         Task<int> GetOrdersCountAsync(OrderFilter filter, CancellationToken cancellationToken = default);
-        Task<List<Order>> GetOrdersByStatusAsync(string status, CancellationToken cancellationToken = default);
         Task<List<Order>> GetOrdersByDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
     }
 }

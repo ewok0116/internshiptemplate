@@ -49,18 +49,6 @@ namespace MyFoodOrderingAPI.Core.Models
         }
     }
 
-    // 🎯 Request models for updating orders
-    public class UpdateOrderStatusRequest
-    {
-        [Required]
-        public string NewStatus { get; set; } = "";
-
-        public bool IsValid()
-        {
-            var validStatuses = new[] { "Pending", "Confirmed", "Preparing", "Ready", "Delivered", "Cancelled" };
-            return validStatuses.Contains(NewStatus);
-        }
-    }
 
     public class CancelOrderRequest
     {

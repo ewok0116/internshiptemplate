@@ -5,7 +5,6 @@ namespace MyFoodOrderingAPI.Features.Orders.CreateOrder
     public class CreateOrderResponse
     {
         public int OrderId { get; set; }
-        public string OrderStatus { get; set; } = "";
         public decimal TotalAmount { get; set; }
         public DateTime OrderDate { get; set; }
         public string DeliveryAddress { get; set; } = "";
